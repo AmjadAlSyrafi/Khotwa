@@ -34,7 +34,7 @@ class RegisterController extends Controller
      $role = Role::where('name', 'Volunteer')->first();
 
             if (!$role) {
-    return redirect()->back()->withErrors(['role' => 'دور Volunteer غير موجود'])->withInput();
+    return redirect()->back()->withErrors(['role' => 'role Volunteer not exist '])->withInput();
             }
 
         $user = User::create([
@@ -46,7 +46,7 @@ class RegisterController extends Controller
 
         // إرسال رابط تفعيل البريد
         event(new Registered($user));
-        return redirect('/login')->with('status', 'تم التسجيل.. يرجى التحقق من بريدك الإلكتروني.');
+        return redirect('/login')->with('status', ' done register.. please check your email.');
     }
 }
 

@@ -27,7 +27,7 @@ class RegisterController extends Controller
         ]);
 
         return response()->json([
-            'message' => 'تم إنشاء الحساب بنجاح',
+            'message' => 'done create account succesfully ',
             'user' => $user
         ], 201);
     }

@@ -19,7 +19,7 @@ class RoleMiddleware
         $user = Auth::user();
 
         if (!$user || !in_array($user->role->name, $roles)) {
-            abort(403, 'ليس لديك صلاحية للوصول.');
+            abort(403, ' you have not acces to reach.');
         }
 
         return $next($request);

@@ -27,19 +27,19 @@ class LoginController extends Controller
             // التحقق من تفعيل البريد
             if (!$user->hasVerifiedEmail()) {
                 Auth::logout();
-                return back()->withErrors(['email' => 'يرجى تفعيل البريد الإلكتروني أولاً.']);
+                return back()->withErrors(['email' => ' please first apply email.!']);
             }
 
             // التحقق من الحالة
             if ($user->status != 1) {
                 Auth::logout();
-                return back()->withErrors(['email' => 'تم تعطيل الحساب.']);
+                return back()->withErrors(['email' => ' done stop the account.']);
             }
 
             return redirect('/'); // وجه المستخدم بعد تسجيل الدخول
         }
 
-        return back()->withErrors(['email' => 'بيانات الدخول غير صحيحة.'])->withInput();
+        return back()->withErrors(['email' => ' input data are not true.'])->withInput();
     }
 
     public function logout(Request $request)
@@ -63,6 +63,4 @@ class LoginController extends Controller
     {
     return $this->belongsTo(Role::class);
     }
-
 }
-

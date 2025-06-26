@@ -13,7 +13,7 @@ class LogoutController extends Controller
         $request->user()->tokens()->delete();
 
         return response()->json([
-            'message' => 'تم تسجيل الخروج وحذف التوكن بنجاح'
+            'message' => ' done logout and delete token succesfully '
         ]);
     }
 }

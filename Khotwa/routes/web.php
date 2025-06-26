@@ -15,11 +15,11 @@ Route::get('/check-db', function () {
 // تجريبي مشان الايميل
 use Illuminate\Support\Facades\Mail;
 Route::get('/test-mail', function () {
-    Mail::raw('هذه تجربة إرسال بريد من Laravel', function ($message) {
+    Mail::raw('Laravel', function ($message) {
         $message->to('your_other_email@example.com')
-                ->subject('اختبار بريد Laravel');
+                ->subject('test email Laravel');
     });
-    return 'تم الإرسال!';
+    return 'done send !';
 });
 
 // الروابط للمشروع المهمة
@@ -49,7 +49,7 @@ Route::get('/email/verify/{id}/{hash}', function (EmailVerificationRequest $requ
 //  لإعادة إرسال رابط التفعيل
 Route::post('/email/verification-notification', function (Request $request) {
     $request->user()->sendEmailVerificationNotification();
-    return back()->with('message', 'تم إرسال رابط التفعيل إلى بريدك الإلكتروني.');
+    return back()->with('message', ' done send link to your email ');
 })->middleware(['auth', 'throttle:6,1'])->name('verification.send');
 
 // لعرض نسيان كلمة المرور ولارسال رابط لاعادة التعين وادخال كلمة مرور جديدوة
@@ -70,7 +70,7 @@ Route::middleware(['auth', 'verified'])->prefix('admin')->name('admin.')->group(
 
 //تجريبي مشان تسجيل الميديل بالرول
 Route::middleware(['auth', 'role:Admin'])->group(function () {
-    Route::get('/admin/dashboard', fn () => 'لوحة تحكم المسؤول ');
+    Route::get('/admin/dashboard', fn () => ' Admin control pannel  ');
 });
 
 //  للمسؤول  (Admin) إدارة المستخدمين، المشاريع، إلخ

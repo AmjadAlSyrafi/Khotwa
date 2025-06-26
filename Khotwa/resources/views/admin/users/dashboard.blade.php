@@ -1,2 +1,1 @@
-
-<h2>مرحبا بك في لوحة التحكم - Admin</h2>
+<h2> Admin welcome to control pannel </h2>

@@ -18,8 +18,8 @@ class ForgotPasswordController extends Controller
         );
 
         return $status === Password::RESET_LINK_SENT
-                    ? response()->json(['message' => 'تم إرسال رابط إعادة تعيين كلمة المرور'])
-                    : response()->json(['message' => 'تعذر إرسال الرابط'], 400);
+                    ? response()->json(['message' => ' done send link reset password'])
+                    : response()->json(['message' => ' applogiez send link '], 400);
     }
 }
 

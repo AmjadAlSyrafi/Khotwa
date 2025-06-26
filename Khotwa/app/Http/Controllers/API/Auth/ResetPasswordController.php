@@ -30,7 +30,7 @@ class ResetPasswordController extends Controller
         );
 
         return $status === Password::PASSWORD_RESET
-                    ? response()->json(['message' => 'تم إعادة تعيين كلمة المرور بنجاح'])
-                    : response()->json(['message' => 'فشل في إعادة التعيين'], 400);
+                    ? response()->json(['message' => ' done reset password succesfully'])
+                    : response()->json(['message' => 'faild reset password '], 400);
     }
 }

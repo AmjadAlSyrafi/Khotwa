@@ -1,11 +1,11 @@
 <!DOCTYPE html>
-<html lang="ar">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>التسجيل</title>
+    <title>register</title>
 </head>
 <body>
-    <h2>تسجيل حساب جديد</h2>
+    <h2>register new account  </h2>
 
     @if ($errors->any())
         <div style="color:red;">
@@ -19,19 +19,19 @@
 
     <form method="POST" action="{{ route('register') }}">
         @csrf
-        <label>اسم المستخدم:</label>
+        <label>username :</label>
         <input type="text" name="username" value="{{ old('username') }}"><br>
 
-        <label>البريد الإلكتروني:</label>
+        <label>email :</label>
         <input type="email" name="email" value="{{ old('email') }}"><br>
 
-        <label>كلمة المرور:</label>
+        <label> password:</label>
         <input type="password" name="password"><br>
 
-        <label>تأكيد كلمة المرور:</label>
+        <label>making sure off password  :</label>
         <input type="password" name="password_confirmation"><br>
 
-        <button type="submit">تسجيل</button>
+        <button type="submit">register</button>
     </form>
 </body>
 </html>

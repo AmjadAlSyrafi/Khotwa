@@ -12,38 +12,79 @@ use Illuminate\Support\Facades\Hash;
 class UserManagementController extends Controller
 {
     //
-     public function index()
+    public function index()
     {
-        $users = User::with('role')->get();
-        return view('admin.users.index', compact('users'));
-    }
-
-    public function create()
-    {
-        $roles = Role::all();
-        $volunteers = Volunteer::all();
-        return view('admin.users.create', compact('roles', 'volunteers'));
+    $users = \App\Models\User::with('role')->get();
+    return response()->json($users);
     }
 
     public function store(Request $request)
     {
-        $request->validate([
-            'username' => 'required|unique:users',
-            'email'    => 'required|email|unique:users',
-            'password' => 'required|min:6',
-            'role_id'  => 'required|exists:roles,id',
-        ]);
+    $validated = $request->validate([
+        'username' => 'required|string|unique:users',
+        'email' => 'required|email|unique:users',
+        'password' => 'required|min:6',
+        'role_id' => 'required|exists:roles,id',
+    ]);
 
-        User::create([
-            'username'     => $request->username,
-            'email'        => $request->email,
-            'password'     => Hash::make($request->password),
-            'role_id'      => $request->role_id,
-            'volunteer_id' => $request->volunteer_id,
-            'status'       => 1,
-        ]);
+    $user = \App\Models\User::create([
+        'username' => $validated['username'],
+        'email' => $validated['email'],
+        'password' => bcrypt($validated['password']),
+        'role_id' => $validated['role_id'],
+    ]);
 
-        return redirect()->route('admin.users.index')->with('success', 'تم إنشاء المستخدم بنجاح');
+    return response()->json(['message' => 'done create user succesfully ', 'user' => $user], 201);
+    }
+
+    public function show($id)
+    {
+    $user = \App\Models\User::with('role')->find($id);
+
+    if (!$user) {
+        return response()->json(['message' => ' user not found '], 404);
+    }
+
+    return response()->json($user);
+    }
+
+    public function update(Request $request, $id)
+    {
+    $user = \App\Models\User::find($id);
+
+    if (!$user) {
+        return response()->json(['message' => ' user not found'], 404);
+    }
+
+    $validated = $request->validate([
+        'username' => 'sometimes|required|string|unique:users,username,'.$id,
+        'email' => 'sometimes|required|email|unique:users,email,'.$id,
+        'password' => 'nullable|min:6',
+        'role_id' => 'sometimes|required|exists:roles,id',
+    ]);
+
+    if (isset($validated['password'])) {
+        $validated['password'] = bcrypt($validated['password']);
+    } else {
+        unset($validated['password']);
+    }
+
+    $user->update($validated);
+
+    return response()->json(['message' => 'done updated succesfully  ', 'user' => $user]);
+    }
+
+    public function destroy($id)
+    {
+    $user = \App\Models\User::find($id);
+
+    if (!$user) {
+        return response()->json(['message' => ' user not found'], 404);
+    }
+
+    $user->delete();
+
+    return response()->json(['message' => ' done deleted user succefully ']);
     }
 
 }

@@ -1,21 +1,21 @@
 <!DOCTYPE html>
-<html lang="ar">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>تفعيل البريد</title>
+    <title>on email </title>
 </head>
 <body>
-    <h2>تفعيل البريد الإلكتروني</h2>
+    <h2>on email  </h2>
 
     @if (session('message'))
         <p style="color: green;">{{ session('message') }}</p>
     @endif
 
-    <p>يرجى التحقق من بريدك الإلكتروني لتفعيل الحساب.</p>
+    <p> please check your email</p>
 
     <form method="POST" action="{{ route('verification.send') }}">
         @csrf
-        <button type="submit">إعادة إرسال رابط التفعيل</button>
+        <button type="submit"> resend link verify </button>
     </form>
 </body>
 </html>

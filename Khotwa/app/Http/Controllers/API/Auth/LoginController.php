@@ -17,14 +17,14 @@ class LoginController extends Controller
         ]);
 
         if (!Auth::attempt($credentials)) {
-            return response()->json(['message' => 'بيانات الدخول غير صحيحة'], 401);
+            return response()->json(['message' => ' input data are not true '], 401);
         }
 
         $user = Auth::user();
         $token = $user->createToken('api-token')->plainTextToken;
 
         return response()->json([
-            'message' => 'تم تسجيل الدخول بنجاح',
+            'message' => ' done login succesfully ',
             'token' => $token,
             'user' => $user,
         ]);

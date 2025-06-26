@@ -1,11 +1,11 @@
-<h2>قائمة المستخدمين</h2>
+<h2> user list </h2>
 <a href="{{ route('admin.users.create') }}">إضافة مستخدم جديد</a>
 
 <table border="1">
     <tr>
-        <th>الاسم</th>
-        <th>البريد</th>
-        <th>الدور</th>
+        <th>username</th>
+        <th>email</th>
+        <th>role</th>
     </tr>
     @foreach ($users as $user)
         <tr>

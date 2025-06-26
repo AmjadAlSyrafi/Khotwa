@@ -2,10 +2,10 @@
 <html lang="ar">
 <head>
     <meta charset="UTF-8">
-    <title>تسجيل الدخول</title>
+    <title> login </title>
 </head>
 <body>
-    <h2>تسجيل الدخول</h2>
+    <h2>login </h2>
 
     @if ($errors->any())
         <div style="color:red;">
@@ -19,13 +19,13 @@
 
     <form method="POST" action="{{ route('login') }}">
         @csrf
-        <label>البريد الإلكتروني:</label>
+        <label>email :</label>
         <input type="email" name="email" value="{{ old('email') }}"><br>
 
-        <label>كلمة المرور:</label>
+        <label>password :</label>
         <input type="password" name="password"><br>
 
-        <button type="submit">تسجيل الدخول</button>
+        <button type="submit">login </button>
     </form>
 </body>
 </html>
