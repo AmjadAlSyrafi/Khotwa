@@ -5,16 +5,17 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\API\Auth\RegisterController;
 use App\Http\Controllers\API\Auth\LoginController;
 use App\Http\Controllers\API\Auth\LogoutController;
-use Illuminate\Foundation\Auth\EmailVerificationRequest;
 use App\Http\Controllers\API\Auth\ForgotPasswordController;
 use App\Http\Controllers\API\Auth\ResetPasswordController;
+use App\Http\Controllers\API\Auth\VerifyOtpController;
 use App\Http\Controllers\Admin\UserManagementController;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
 
-Route::get('/user', function (Request $request) {
+//  المستخدم الحالي (مع توكن)
+Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
     return $request->user();
-})->middleware('auth:sanctum');
+});
 
 // اختبار قاعدة البيانتات
 Route::get('/check-db', function () {
@@ -52,35 +53,25 @@ Route::post('/test-mail', function (Request $request) {
 });
 
 // تسجيل مستخدم جديد
-Route::post('/register', [RegisterController::class, 'register']);
+Route::post('/register', [RegisterController::class, 'register']);// on
+
+//  تحقق من OTP بعد التسجيل
+Route::post('/verify-otp', [VerifyOtpController::class, 'verify']); // on
+
+//  إعادة إرسال OTP للتحقق
+Route::post('/resend-otp', [VerifyOtpController::class, 'resend']);// on
 
 // تسجيل الدخول
-Route::post('/login', [LoginController::class, 'login']);
+Route::post('/login', [LoginController::class, 'login']); // on
 
 // تسجيل الخروج (بدو توكن)
 Route::middleware('auth:sanctum')->post('/logout', [LogoutController::class, 'logout']);
 
-// إرسال رابط التفعيل من جديد
-Route::middleware(['auth:sanctum'])->post('/email/verify/resend', function (Request $request) {
-    if ($request->user()->hasVerifiedEmail()) {
-        return response()->json(['message' => 'the email is on acctully '], 400);
-    }
+// نسيان كلمة المرور=> إرسال OTP
+Route::post('/forgot-password', [ForgotPasswordController::class, 'sendResetOtp']);// on
 
-    $request->user()->sendEmailVerificationNotification();
-
-    return response()->json(['message' => ' done send link verify to your email ']);
-});
-
-// تأكيد التحقق بعد الكبس على الرابط
-Route::get('/email/verify/{id}/{hash}', function (EmailVerificationRequest $request) {
-    $request->fulfill();
-
-    return response()->json(['message' => ' the email is on succesfully ']);
-})->middleware(['auth:sanctum', 'signed'])->name('verification.verify');
-
-// لاستعادة كلمةة المرور
-Route::post('/forgot-password', [ForgotPasswordController::class, 'sendResetLinkEmail']);
-Route::post('/reset-password', [ResetPasswordController::class, 'reset']);
+//  إعادة تعيين كلمة المرور: إدخال OTP + كلمة جديدة
+Route::post('/reset-password', [ResetPasswordController::class, 'reset']);//on
 
 // من اجل ادارة المستخدمين من قبل الادمن
 Route::middleware(['auth:sanctum', 'role:Admin'])->prefix('admin')->group(function () {
@@ -104,5 +95,4 @@ Route::middleware(['auth:sanctum', 'role:Volunteer'])->prefix('volunteer')->grou
         return response()->json(['message' => ' volunteer pannel ']);
     });
 });
-
 

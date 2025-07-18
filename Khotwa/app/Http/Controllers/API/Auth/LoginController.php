@@ -17,16 +17,21 @@ class LoginController extends Controller
         ]);
 
         if (!Auth::attempt($credentials)) {
-            return response()->json(['message' => ' input data are not true '], 401);
+            return response()->json(['message' => 'input data are not true'], 401);
         }
 
         $user = Auth::user();
+
+        if (!$user->email_verified_at) {
+            return response()->json(['message' => 'we do not checl the email yet .'], 403);
+        }
+
         $token = $user->createToken('api-token')->plainTextToken;
 
         return response()->json([
             'message' => ' done login succesfully ',
-            'token' => $token,
-            'user' => $user,
+            'token'   => $token,
+            'user'    => $user,
         ]);
     }
 }

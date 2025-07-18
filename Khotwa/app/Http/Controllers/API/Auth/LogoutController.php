@@ -17,4 +17,3 @@ class LogoutController extends Controller
         ]);
     }
 }
-
