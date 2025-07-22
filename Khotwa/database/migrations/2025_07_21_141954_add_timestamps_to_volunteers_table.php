@@ -11,17 +11,16 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('badges', function (Blueprint $table) {
-            $table->id();
+        Schema::table('volunteers', function (Blueprint $table) {
+            
             $table->timestamps();
         });
     }
 
-    /**
-     * Reverse the migrations.
-     */
     public function down(): void
     {
-        Schema::dropIfExists('badges');
+        Schema::table('volunteers', function (Blueprint $table) {
+            $table->dropTimestamps();
+        });
     }
 };

@@ -5,8 +5,6 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\User;
-use App\Models\Role;
-use App\Models\Volunteer;
 use Illuminate\Support\Facades\Hash;
 
 class UserManagementController extends Controller
@@ -14,7 +12,7 @@ class UserManagementController extends Controller
     //
     public function index()
     {
-    $users = \App\Models\User::with('role')->get();
+    $users = User::with('role')->get();
     return response()->json($users);
     }
 
@@ -27,7 +25,7 @@ class UserManagementController extends Controller
         'role_id' => 'required|exists:roles,id',
     ]);
 
-    $user = \App\Models\User::create([
+    $user = User::create([
         'username' => $validated['username'],
         'email' => $validated['email'],
         'password' => bcrypt($validated['password']),
@@ -39,7 +37,7 @@ class UserManagementController extends Controller
 
     public function show($id)
     {
-    $user = \App\Models\User::with('role')->find($id);
+    $user = User::with('role')->find($id);
 
     if (!$user) {
         return response()->json(['message' => ' user not found '], 404);
@@ -50,7 +48,7 @@ class UserManagementController extends Controller
 
     public function update(Request $request, $id)
     {
-    $user = \App\Models\User::find($id);
+    $user = User::find($id);
 
     if (!$user) {
         return response()->json(['message' => ' user not found'], 404);
@@ -76,7 +74,7 @@ class UserManagementController extends Controller
 
     public function destroy($id)
     {
-    $user = \App\Models\User::find($id);
+    $user = User::find($id);
 
     if (!$user) {
         return response()->json(['message' => ' user not found'], 404);
