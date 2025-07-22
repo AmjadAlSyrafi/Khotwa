@@ -16,13 +16,16 @@ class RoleMiddleware
      */
     public function handle(Request $request, Closure $next, $roles)
     {
-        $user = Auth::user();
+    $user = Auth::user();
 
-        if (!$user || !in_array($user->role->name, $roles)) {
-            abort(403, ' you have not acces to reach.');
-        }
+    // convert roles string to array
+    $roleArray = explode(',', $roles);
 
-        return $next($request);
+    if (!$user || !in_array($user->role->name, $roleArray)) {
+        abort(403, 'You do not have access.');
+    }
+
+    return $next($request);
     }
 }
 

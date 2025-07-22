@@ -2,97 +2,121 @@
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\API\Auth\RegisterController;
-use App\Http\Controllers\API\Auth\LoginController;
-use App\Http\Controllers\API\Auth\LogoutController;
-use App\Http\Controllers\API\Auth\ForgotPasswordController;
-use App\Http\Controllers\API\Auth\ResetPasswordController;
-use App\Http\Controllers\API\Auth\VerifyOtpController;
-use App\Http\Controllers\Admin\UserManagementController;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
 
-//  المستخدم الحالي (مع توكن)
-Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
-    return $request->user();
-});
+use App\Http\Controllers\API\Auth\{
+    RegisterController,
+    LoginController,
+    LogoutController,
+    ForgotPasswordController,
+    OtpController,
+    ResetPasswordController,
+    VerifyOtpController,
+};
 
-// اختبار قاعدة البيانتات
+use App\Http\Controllers\{
+    VolunteerController
+};
+
+use App\Http\Controllers\Admin\{
+    VolunteerApplicationController,
+};
+
+use App\Http\Controllers\Admin\UserManagementController;
+
+//
+//  Public Utility Routes
+//
 Route::get('/check-db', function () {
     try {
         return response()->json([
-            'message' => ' connection on DB are succes ',
+            'message' => 'Connection to DB is successful.',
             'database' => DB::connection()->getDatabaseName()
         ]);
     } catch (\Exception $e) {
         return response()->json([
-            'message' => 'fail connection on DB',
+            'message' => 'DB connection failed.',
             'error' => $e->getMessage()
         ], 500);
     }
 });
 
-// اختبار إرسال بريد
 Route::post('/test-mail', function (Request $request) {
     $email = $request->input('email');
 
     if (!$email) {
-        return response()->json(['message' => 'please enter email.'], 422);
+        return response()->json(['message' => 'Please enter email.'], 422);
     }
 
     try {
-        Mail::raw('Laravel API', function ($message) use ($email) {// رسالة تجريبية من لارافيل
-            $message->to($email)
-                    ->subject(' test send email API');
+        Mail::raw('Laravel API Test Email', function ($message) use ($email) {
+            $message->to($email)->subject('Test Email API');
         });
 
-        return response()->json(['message' => ' done send the email to: ' . $email]);
+        return response()->json(['message' => 'Email sent to: ' . $email]);
     } catch (\Exception $e) {
-        return response()->json(['message' => '  faild send the email :  ', 'error' => $e->getMessage()], 500);
+        return response()->json(['message' => 'Failed to send email.', 'error' => $e->getMessage()], 500);
     }
 });
 
-// تسجيل مستخدم جديد
-Route::post('/register', [RegisterController::class, 'register']);// on
+//Add volunteerApplication
+Route::post('/join-request', [VolunteerApplicationController::class, 'store']);
 
-//  تحقق من OTP بعد التسجيل
-Route::post('/verify-otp', [VerifyOtpController::class, 'verify']); // on
 
-//  إعادة إرسال OTP للتحقق
-Route::post('/resend-otp', [VerifyOtpController::class, 'resend']);// on
+//
+//  Authenticated User Info
+//
+Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
+    return $request->user();
+});
 
-// تسجيل الدخول
-Route::post('/login', [LoginController::class, 'login']); // on
+//
+//  Authentication Routes Group
+//
+Route::prefix('auth')->group(function () {
 
-// تسجيل الخروج (بدو توكن)
-Route::middleware('auth:sanctum')->post('/logout', [LogoutController::class, 'logout']);
+    // 🔹 Registration
+    Route::post('/register', [RegisterController::class, 'register']);
 
-// نسيان كلمة المرور=> إرسال OTP
-Route::post('/forgot-password', [ForgotPasswordController::class, 'sendResetOtp']);// on
+    // 🔹 Login & Logout
+    Route::post('/login', [LoginController::class, 'login']);
+    Route::middleware('auth:sanctum')->post('/logout', [LogoutController::class, 'logout']);
 
-//  إعادة تعيين كلمة المرور: إدخال OTP + كلمة جديدة
-Route::post('/reset-password', [ResetPasswordController::class, 'reset']);//on
+    // 🔹 OTP Verification
+    Route::post('/verify-otp', [OtpController::class, 'verify']);
 
-// من اجل ادارة المستخدمين من قبل الادمن
+    // 🔹 Forgot & Reset Password
+    Route::post('/forget-password', [ForgotPasswordController::class, 'sendResetOtp']);
+    Route::post('/confirm-reset-password', [ForgotPasswordController::class, 'reset']);
+    Route::post('/change-default-password', [ForgotPasswordController::class, 'changeDefaultPassword']);
+
+});
+
+//
+//  Admin Routes
+//
 Route::middleware(['auth:sanctum', 'role:Admin'])->prefix('admin')->group(function () {
     Route::get('/users', [UserManagementController::class, 'index']);
     Route::post('/users', [UserManagementController::class, 'store']);
     Route::get('/users/{id}', [UserManagementController::class, 'show']);
     Route::put('/users/{id}', [UserManagementController::class, 'update']);
     Route::delete('/users/{id}', [UserManagementController::class, 'destroy']);
+    Route::get('/join-requests', [VolunteerApplicationController::class, 'index']);
+    Route::post('/volunteers', [VolunteerController::class, 'store']);
+    Route::post('/applications/approve', [VolunteerApplicationController::class, 'approve']);
 });
 
-// لوحة المشرف مثل تحكم للمشرف
+//
+//  Supervisor Dashboard
+//
 Route::middleware(['auth:sanctum', 'role:Supervisor'])->prefix('supervisor')->group(function () {
-    Route::get('/dashboard', function () {
-        return response()->json(['message' => ' supervisoration pannel']);
-    });
+
 });
 
-// لوحة المتطوع
+//
+// ✅ Volunteer Dashboard
+//
 Route::middleware(['auth:sanctum', 'role:Volunteer'])->prefix('volunteer')->group(function () {
-    Route::get('/dashboard', function () {
-        return response()->json(['message' => ' volunteer pannel ']);
-    });
-});
 
+});

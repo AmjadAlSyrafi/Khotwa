@@ -20,7 +20,8 @@ class User extends Authenticatable implements MustVerifyEmail
         'password',
         'role_id',
         'volunteer_id',
-        'status',
+        'email_verified',
+        'password_verified'
     ];
 
     /**
@@ -34,7 +35,6 @@ class User extends Authenticatable implements MustVerifyEmail
     ];
 
     protected $casts = [
-        'email_verified_at' => 'datetime',
         'password' => 'hashed',
 
     ];
@@ -47,9 +47,8 @@ class User extends Authenticatable implements MustVerifyEmail
 
     public function volunteer()
     {
-        return $this->belongsTo(Volunteer::class);
+        return $this->hasOne(Volunteer::class);
     }
-
     /**
      * Get the attributes that should be cast.
      *
