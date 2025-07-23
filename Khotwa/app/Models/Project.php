@@ -9,4 +9,18 @@ class Project extends Model
 {
     /** @use HasFactory<\Database\Factories\ProjectFactory> */
     use HasFactory;
+
+    protected $fillable = [
+        'name',
+        'description',
+        'start_date',
+        'end_date',
+        'status',
+    ];
+
+    public function events()
+    {
+        return $this->hasMany(Event::class);
+    }
+
 }

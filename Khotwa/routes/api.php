@@ -11,12 +11,13 @@ use App\Http\Controllers\API\Auth\{
     LogoutController,
     ForgotPasswordController,
     OtpController,
-    ResetPasswordController,
-    VerifyOtpController,
 };
 
 use App\Http\Controllers\{
-    VolunteerController
+    VolunteerController,
+    ProjectController,
+    EventController
+
 };
 
 use App\Http\Controllers\Admin\{
@@ -97,14 +98,11 @@ Route::prefix('auth')->group(function () {
 //  Admin Routes
 //
 Route::middleware(['auth:sanctum', 'role:Admin'])->prefix('admin')->group(function () {
-    Route::get('/users', [UserManagementController::class, 'index']);
-    Route::post('/users', [UserManagementController::class, 'store']);
-    Route::get('/users/{id}', [UserManagementController::class, 'show']);
-    Route::put('/users/{id}', [UserManagementController::class, 'update']);
-    Route::delete('/users/{id}', [UserManagementController::class, 'destroy']);
+    Route::apiResource('users', UserManagementController::class);
     Route::get('/join-requests', [VolunteerApplicationController::class, 'index']);
-    Route::post('/volunteers', [VolunteerController::class, 'store']);
     Route::post('/applications/approve', [VolunteerApplicationController::class, 'approve']);
+    Route::apiResource('projects', ProjectController::class);
+    Route::apiResource('/events', EventController::class);
 });
 
 //
