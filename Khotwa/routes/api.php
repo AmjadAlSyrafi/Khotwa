@@ -16,7 +16,8 @@ use App\Http\Controllers\API\Auth\{
 use App\Http\Controllers\{
     VolunteerController,
     ProjectController,
-    EventController
+    EventController,
+    EventRegistrationController
 
 };
 
@@ -116,5 +117,6 @@ Route::middleware(['auth:sanctum', 'role:Supervisor'])->prefix('supervisor')->gr
 // ✅ Volunteer Dashboard
 //
 Route::middleware(['auth:sanctum', 'role:Volunteer'])->prefix('volunteer')->group(function () {
-
+    Route::post('/event-register', [EventRegistrationController::class, 'register']);
+    Route::post('/event-withdraw', [EventRegistrationController::class, 'withdraw']);
 });
