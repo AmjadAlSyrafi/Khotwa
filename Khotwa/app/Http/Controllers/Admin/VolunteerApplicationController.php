@@ -63,7 +63,7 @@ class VolunteerApplicationController extends Controller
             $baseUsername= "user";
             $randomDigits = rand(100, 999);
             $username = $baseUsername . $randomDigits;
-            
+
             $role = Role::where('name', $request->role)->first();
 
             if (!$role) {
@@ -94,7 +94,8 @@ class VolunteerApplicationController extends Controller
                 'registration_date' => now(),
                 'volunteering_years' => $application->volunteering_years,
                 'motivation' => $application->motivation,
-                'availability_days' => $application->availability,
+                'interests' => $application->interests,
+                'availability' => $application->availability,
                 'preferred_time' => $application->preferred_time,
                 'emergency_contact_name' => $application->emergency_contact_name,
                 'emergency_contact_phone' => $application->emergency_contact_phone,

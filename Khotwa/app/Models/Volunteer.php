@@ -23,8 +23,9 @@ protected $fillable = [
     'registration_date',
     'volunteering_years',
     'motivation',
-    'availability_days',
+    'availability',
     'preferred_time',
+    'interests',
     'emergency_contact_name',
     'emergency_contact_phone',
     'emergency_contact_relationship',
@@ -48,7 +49,8 @@ protected $fillable = [
     protected $casts = [
     'birth_date' => 'date',
     'registration_date' => 'date',
-    'availability_days' => 'array',
+    'availability' => 'array',
+    'interests' => 'array',
 ];
 
 }
