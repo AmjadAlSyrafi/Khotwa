@@ -91,7 +91,6 @@ Route::prefix('auth')->group(function () {
     // 🔹 Forgot & Reset Password
     Route::post('/forget-password', [ForgotPasswordController::class, 'sendResetOtp']);
     Route::post('/confirm-reset-password', [ForgotPasswordController::class, 'reset']);
-    Route::post('/change-default-password', [ForgotPasswordController::class, 'changeDefaultPassword']);
 
 });
 
@@ -117,6 +116,7 @@ Route::middleware(['auth:sanctum', 'role:Supervisor'])->prefix('supervisor')->gr
 // ✅ Volunteer Dashboard
 //
 Route::middleware(['auth:sanctum', 'role:Volunteer'])->prefix('volunteer')->group(function () {
+    Route::post('/change-default-password', [ForgotPasswordController::class, 'changeDefaultPassword']);
     Route::post('/event-register', [EventRegistrationController::class, 'register']);
     Route::post('/event-withdraw', [EventRegistrationController::class, 'withdraw']);
 });
