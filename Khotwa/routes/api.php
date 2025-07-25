@@ -13,6 +13,10 @@ use App\Http\Controllers\API\Auth\{
     OtpController,
 };
 
+use App\Http\Controllers\API\Volunteer\{
+    ProfileController,
+};
+
 use App\Http\Controllers\{
     VolunteerController,
     ProjectController,
@@ -23,6 +27,7 @@ use App\Http\Controllers\{
 
 use App\Http\Controllers\Admin\{
     VolunteerApplicationController,
+    VolunteerAdminController,
 };
 
 use App\Http\Controllers\Admin\UserManagementController;
@@ -119,4 +124,21 @@ Route::middleware(['auth:sanctum', 'role:Volunteer'])->prefix('volunteer')->grou
     Route::post('/change-default-password', [ForgotPasswordController::class, 'changeDefaultPassword']);
     Route::post('/event-register', [EventRegistrationController::class, 'register']);
     Route::post('/event-withdraw', [EventRegistrationController::class, 'withdraw']);
+});
+
+
+
+// مسارات الأدمن للمتطوعين
+Route::middleware(['auth:sanctum', 'role:admin'])->prefix('admin')->group(function () {
+    Route::get('/volunteers', [VolunteerAdminController::class, 'index']);
+    Route::post('/volunteers', [VolunteerAdminController::class, 'store']);
+    Route::get('/volunteers/{id}', [VolunteerAdminController::class, 'show']);
+    Route::put('/volunteers/{id}', [VolunteerAdminController::class, 'update']);
+    Route::delete('/volunteers/{id}', [VolunteerAdminController::class, 'destroy']);
+});
+
+// (لحاله)مسارات المتطوع لملفه الشخصي
+Route::middleware(['auth:sanctum', 'role:volunteer'])->group(function () {
+    Route::get('/volunteer/profile', [ProfileController::class, 'show']);
+    Route::put('/volunteer/profile', [ProfileController::class, 'update']);
 });
