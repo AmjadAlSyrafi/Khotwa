@@ -32,6 +32,7 @@ use App\Http\Controllers\Admin\{
 
 use App\Http\Controllers\Admin\UserManagementController;
 use App\Http\Controllers\SearchController;
+use App\Http\Controllers\TaskController;
 
 //
 //  Public Utility Routes
@@ -119,7 +120,11 @@ Route::middleware(['auth:sanctum', 'role:Admin'])->prefix('admin')->group(functi
 //  Supervisor Dashboard
 //
 Route::middleware(['auth:sanctum', 'role:Supervisor'])->prefix('supervisor')->group(function () {
-
+    Route::get('/tasks', [TaskController::class, 'supervisorTasks']);
+    Route::get('/tasks/{id}', [TaskController::class, 'supervisorShow']);
+    Route::post('/tasks', [TaskController::class, 'createTask']);
+    Route::put('/tasks/{id}', [TaskController::class, 'updateTask']);
+    Route::delete('/tasks/{id}', [TaskController::class, 'deleteTask']);
 });
 
 //
@@ -131,6 +136,11 @@ Route::middleware(['auth:sanctum', 'role:Volunteer'])->prefix('volunteer')->grou
     Route::post('/event-withdraw', [EventRegistrationController::class, 'withdraw']);
     Route::get('/volunteer/profile', [ProfileController::class, 'show']);
     Route::put('/volunteer/profile', [ProfileController::class, 'update']);
+    Route::get('/tasks', [TaskController::class, 'volunteerTasks']); 
+    Route::post('/tasks/{id}/accept', [TaskController::class, 'acceptTask']);
+    Route::post('/tasks/{id}/reject', [TaskController::class, 'rejectTask']);
+    Route::post('/tasks/{id}/withdraw', [TaskController::class, 'withdrawTask']);
+    Route::post('/tasks/{id}/status', [TaskController::class, 'updateCompletionState']);
 });
 
 // راوتات البحث(المتطوع خاص للمشرف والباقي للكل )
@@ -139,3 +149,4 @@ Route::prefix('search')->middleware(['auth:sanctum'])->group(function () {
     Route::get('/events', [SearchController::class, 'searchEvents']);
     Route::get('/projects', [SearchController::class, 'searchProjects']);
 });
+

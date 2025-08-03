@@ -9,4 +9,14 @@ class Task extends Model
 {
     /** @use HasFactory<\Database\Factories\TaskFactory> */
     use HasFactory;
+
+     protected $fillable = [
+        'title',
+        'description',
+        'supervisor_id',
+        'volunteer_id',
+        'start_time',
+        'status',          //pending, accepted, rejected, applogize
+        'completion_state' //active, completed
+    ];
 }
