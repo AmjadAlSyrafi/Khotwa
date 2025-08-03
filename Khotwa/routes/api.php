@@ -31,6 +31,7 @@ use App\Http\Controllers\Admin\{
 };
 
 use App\Http\Controllers\Admin\UserManagementController;
+use App\Http\Controllers\SearchController;
 
 //
 //  Public Utility Routes
@@ -108,9 +109,13 @@ Route::middleware(['auth:sanctum', 'role:Admin'])->prefix('admin')->group(functi
     Route::post('/applications/approve', [VolunteerApplicationController::class, 'approve']);
     Route::apiResource('projects', ProjectController::class);
     Route::apiResource('/events', EventController::class);
+    Route::get('/volunteers', [VolunteerAdminController::class, 'index']);
+    Route::post('/volunteers', [VolunteerAdminController::class, 'store']);
+    Route::get('/volunteers/{id}', [VolunteerAdminController::class, 'show']);
+    Route::put('/volunteers/{id}', [VolunteerAdminController::class, 'update']);
+    Route::delete('/volunteers/{id}', [VolunteerAdminController::class, 'destroy']);
 });
 
-//
 //  Supervisor Dashboard
 //
 Route::middleware(['auth:sanctum', 'role:Supervisor'])->prefix('supervisor')->group(function () {
@@ -124,21 +129,13 @@ Route::middleware(['auth:sanctum', 'role:Volunteer'])->prefix('volunteer')->grou
     Route::post('/change-default-password', [ForgotPasswordController::class, 'changeDefaultPassword']);
     Route::post('/event-register', [EventRegistrationController::class, 'register']);
     Route::post('/event-withdraw', [EventRegistrationController::class, 'withdraw']);
-});
-
-
-
-// مسارات الأدمن للمتطوعين
-Route::middleware(['auth:sanctum', 'role:admin'])->prefix('admin')->group(function () {
-    Route::get('/volunteers', [VolunteerAdminController::class, 'index']);
-    Route::post('/volunteers', [VolunteerAdminController::class, 'store']);
-    Route::get('/volunteers/{id}', [VolunteerAdminController::class, 'show']);
-    Route::put('/volunteers/{id}', [VolunteerAdminController::class, 'update']);
-    Route::delete('/volunteers/{id}', [VolunteerAdminController::class, 'destroy']);
-});
-
-// (لحاله)مسارات المتطوع لملفه الشخصي
-Route::middleware(['auth:sanctum', 'role:volunteer'])->group(function () {
     Route::get('/volunteer/profile', [ProfileController::class, 'show']);
     Route::put('/volunteer/profile', [ProfileController::class, 'update']);
+});
+
+// راوتات البحث(المتطوع خاص للمشرف والباقي للكل )
+Route::prefix('search')->middleware(['auth:sanctum'])->group(function () {
+    Route::get('/volunteers', [SearchController::class, 'searchVolunteers'])->middleware('role:supervisor');
+    Route::get('/events', [SearchController::class, 'searchEvents']);
+    Route::get('/projects', [SearchController::class, 'searchProjects']);
 });
