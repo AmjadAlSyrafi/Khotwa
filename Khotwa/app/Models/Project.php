@@ -23,4 +23,8 @@ class Project extends Model
         return $this->hasMany(Event::class);
     }
 
+    public function donations()
+{
+    return $this->hasMany(Donation::class);
+}
 }

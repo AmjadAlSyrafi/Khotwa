@@ -119,4 +119,7 @@ Route::middleware(['auth:sanctum', 'role:Volunteer'])->prefix('volunteer')->grou
     Route::post('/change-default-password', [ForgotPasswordController::class, 'changeDefaultPassword']);
     Route::post('/event-register', [EventRegistrationController::class, 'register']);
     Route::post('/event-withdraw', [EventRegistrationController::class, 'withdraw']);
+    Route::get('/events/recommended', [EventController::class, 'recommended']);
+    Route::get('/projects/top', [ProjectController::class, 'top']);
+
 });

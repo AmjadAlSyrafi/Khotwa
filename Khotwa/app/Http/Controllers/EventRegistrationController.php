@@ -53,7 +53,7 @@ class EventRegistrationController extends Controller
     /**
      * Withdraw a volunteer from an event.
      */
-    public function withdraw(Request $request)
+    public function withdraw(StoreEventRegistrationRequest $request)
     {
         $request->validate([
             'event_id' => 'required|exists:events,id',

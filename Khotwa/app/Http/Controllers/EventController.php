@@ -52,4 +52,18 @@ class EventController extends Controller
         $event->delete();
         return ApiResponse::success(null, 'Event deleted successfully');
     }
+
+    public function recommended()
+{
+    $events = Event::withCount(['registrations as registered_count'])
+        ->where('status', 'open')
+        ->orderBy('date', 'asc')
+        ->take(10)
+        ->get();
+
+//will be improved later!!
+
+    return ApiResponse::success($events, 'Recommended events fetched successfully');
+}
+
 }
