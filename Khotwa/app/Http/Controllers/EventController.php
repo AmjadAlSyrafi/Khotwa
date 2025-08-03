@@ -53,3 +53,4 @@ class EventController extends Controller
         return ApiResponse::success(null, 'Event deleted successfully');
     }
 }
+
