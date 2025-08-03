@@ -4,10 +4,12 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Laravel\Scout\Searchable;
 
 class Event extends Model
 {
     use HasFactory;
+    use Searchable;
 
     protected $fillable = [
         'title',
@@ -24,6 +26,17 @@ class Event extends Model
         'registered_count',
     ];
 
+    public function toSearchableArray()
+    {
+    return [
+        'id' => $this->id,
+        'title' => $this->title,
+        'description' => $this->description,
+        'location' => $this->location,
+        'date' => $this->date,
+        'time' => $this->time
+    ];
+    }
     // Relationships
     public function project()
     {

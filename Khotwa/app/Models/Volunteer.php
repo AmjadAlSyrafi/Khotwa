@@ -4,11 +4,13 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Laravel\Scout\Searchable;
 
 class Volunteer extends Model
 {
     /** @use HasFactory<\Database\Factories\VolunteerFactory> */
     use HasFactory;
+    use Searchable;
 
 protected $fillable = [
     'full_name',
@@ -31,6 +33,19 @@ protected $fillable = [
     'emergency_contact_relationship',
     'user_id',
 ];
+
+public function toSearchableArray()
+{
+    return [
+        'id' => $this->id,
+        'full_name' => $this->full_name,
+        'email' => $this->email,
+        'phone' => $this->phone,
+        'city_id' => $this->city_id,
+        'university' => $this->university,
+        'education_level' => $this->education_level
+    ];
+}
 
     public function user()
     {
