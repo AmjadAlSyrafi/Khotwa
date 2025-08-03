@@ -4,11 +4,13 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Laravel\Scout\Searchable;
 
 class Project extends Model
 {
     /** @use HasFactory<\Database\Factories\ProjectFactory> */
     use HasFactory;
+    use Searchable;
 
     protected $fillable = [
         'name',
@@ -17,6 +19,17 @@ class Project extends Model
         'end_date',
         'status',
     ];
+
+    public function toSearchableArray()
+    {
+    return [
+        'id' => $this->id,
+        'name' => $this->name,
+        'description' => $this->description,
+        'start_date' => $this->start_date,
+        'end_date' => $this->end_date
+    ];
+    }
 
     public function events()
     {
@@ -28,3 +41,4 @@ class Project extends Model
     return $this->hasMany(Donation::class);
 }
 }
+

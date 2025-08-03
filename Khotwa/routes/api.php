@@ -13,6 +13,10 @@ use App\Http\Controllers\API\Auth\{
     OtpController,
 };
 
+use App\Http\Controllers\API\Volunteer\{
+    ProfileController,
+};
+
 use App\Http\Controllers\{
     VolunteerController,
     ProjectController,
@@ -23,9 +27,11 @@ use App\Http\Controllers\{
 
 use App\Http\Controllers\Admin\{
     VolunteerApplicationController,
+    VolunteerAdminController,
 };
 
 use App\Http\Controllers\Admin\UserManagementController;
+use App\Http\Controllers\SearchController;
 
 //
 //  Public Utility Routes
@@ -103,9 +109,13 @@ Route::middleware(['auth:sanctum', 'role:Admin'])->prefix('admin')->group(functi
     Route::post('/applications/approve', [VolunteerApplicationController::class, 'approve']);
     Route::apiResource('projects', ProjectController::class);
     Route::apiResource('/events', EventController::class);
+    Route::get('/volunteers', [VolunteerAdminController::class, 'index']);
+    Route::post('/volunteers', [VolunteerAdminController::class, 'store']);
+    Route::get('/volunteers/{id}', [VolunteerAdminController::class, 'show']);
+    Route::put('/volunteers/{id}', [VolunteerAdminController::class, 'update']);
+    Route::delete('/volunteers/{id}', [VolunteerAdminController::class, 'destroy']);
 });
 
-//
 //  Supervisor Dashboard
 //
 Route::middleware(['auth:sanctum', 'role:Supervisor'])->prefix('supervisor')->group(function () {
@@ -122,4 +132,13 @@ Route::middleware(['auth:sanctum', 'role:Volunteer'])->prefix('volunteer')->grou
     Route::get('/events/recommended', [EventController::class, 'recommended']);
     Route::get('/projects/top', [ProjectController::class, 'top']);
 
+    Route::get('/volunteer/profile', [ProfileController::class, 'show']);
+    Route::put('/volunteer/profile', [ProfileController::class, 'update']);
+});
+
+// راوتات البحث(المتطوع خاص للمشرف والباقي للكل )
+Route::prefix('search')->middleware(['auth:sanctum'])->group(function () {
+    Route::get('/volunteers', [SearchController::class, 'searchVolunteers'])->middleware('role:supervisor');
+    Route::get('/events', [SearchController::class, 'searchEvents']);
+    Route::get('/projects', [SearchController::class, 'searchProjects']);
 });
