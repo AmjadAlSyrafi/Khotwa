@@ -55,5 +55,40 @@ class ProjectController extends Controller
 
         return ApiResponse::success(null, 'Project deleted successfully');
     }
+
+public function top()
+{
+    $projects = Project::with([
+            'donations',
+            'events.registrations'
+        ])
+        ->get()
+        ->map(function ($project) {
+
+            $paid = $project->donations->sum('amount');
+            $participants = $project->events->sum(function ($event) {
+                return $event->registrations->where('status', 'accepted')->count();
+            });
+
+            $activityScore = $paid + ($participants * 10) + ($project->events->count() * 5);
+            // وزن تقريبي: التبرعات + المشاركين + عدد الفعاليات
+
+            return [
+                'id' => $project->id,
+                'name' => $project->name,
+                'organization' => $project->organization ?? 'Charity Org',
+                'paid' => $paid,
+                'participants' => $participants,
+                'events_count' => $project->events->count(),
+                'activity_score' => $activityScore,
+            ];
+        })
+        ->sortByDesc('activity_score')
+        ->values();
+
+    return ApiResponse::success($projects, 'Top projects fetched successfully.');
+}
+
+
 }
 

@@ -10,7 +10,6 @@ class Volunteer extends Model
 {
     /** @use HasFactory<\Database\Factories\VolunteerFactory> */
     use HasFactory;
-    use Searchable;
 
 protected $fillable = [
     'full_name',

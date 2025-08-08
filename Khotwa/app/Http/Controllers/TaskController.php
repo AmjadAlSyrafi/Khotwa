@@ -3,8 +3,6 @@
 namespace App\Http\Controllers;
 
 use App\Models\Task;
-use App\Http\Requests\StoreTaskRequest;
-use App\Http\Requests\UpdateTaskRequest;
 use App\Helpers\ApiResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -12,8 +10,7 @@ use Carbon\Carbon;
 
 class TaskController extends Controller
 {
-    /////////////////////////////////////////////////
-    // كلشي خاص بالمشرف.....
+    // ---------------- Supervisor Actions ---------------- //
 
     public function createTask(Request $request)
     {
@@ -26,6 +23,7 @@ class TaskController extends Controller
 
         $data['supervisor_id'] = Auth::id();
         $data['status'] = 'pending';
+        $data['completion_state'] = 'active';
 
         $task = Task::create($data);
 
@@ -39,7 +37,9 @@ class TaskController extends Controller
             return ApiResponse::error('Task not found', 404);
         }
 
-        $this->authorizeSupervisor($task);
+        if ($task->supervisor_id !== Auth::id()) {
+            return ApiResponse::error('Unauthorized', 403);
+        }
 
         $data = $request->validate([
             'title'       => 'sometimes|string|max:255',
@@ -59,21 +59,28 @@ class TaskController extends Controller
             return ApiResponse::error('Task not found', 404);
         }
 
-        $this->authorizeSupervisor($task);
+        if ($task->supervisor_id !== Auth::id()) {
+            return ApiResponse::error('Unauthorized', 403);
+        }
 
         $task->delete();
 
         return ApiResponse::success(null, 'Task deleted successfully');
     }
 
-    // عرض كل مهام المشرف
-    public function supervisorTasks()
+    public function supervisorTasks(Request $request)
     {
-        $tasks = Task::where('supervisor_id', Auth::id())->get();
+        $query = Task::where('supervisor_id', Auth::id());
+
+        if ($request->has('status')) {
+            $query->where('status', $request->status);
+        }
+
+        $tasks = $query->get();
+
         return ApiResponse::success($tasks, 'Supervisor tasks retrieved successfully');
     }
 
-    // عرض مهمة معينة يعني خاصة للمشرف
     public function supervisorShow($id)
     {
         $task = Task::find($id);
@@ -81,78 +88,76 @@ class TaskController extends Controller
             return ApiResponse::error('Task not found', 404);
         }
 
-        $this->authorizeSupervisor($task);
+        if ($task->supervisor_id !== Auth::id()) {
+            return ApiResponse::error('Unauthorized', 403);
+        }
 
         return ApiResponse::success($task, 'Task details retrieved successfully');
     }
 
-    /////////////////////////////////////////////////
-    // كلشي للمتطوع
-    public function volunteerTasks()
+    // ---------------- Volunteer Actions ---------------- //
+
+    public function volunteerTasks(Request $request)
     {
-        $tasks = Task::where('volunteer_id', Auth::id())->get();
+        $volunteer = Auth::user()->volunteer;
+        if (!$volunteer) {
+            return ApiResponse::error('Only volunteers can access this endpoint.', 403);
+        }
+
+        $query = Task::where('volunteer_id', $volunteer->id);
+
+        if ($request->has('status')) {
+            $query->where('status', $request->status);
+        }
+
+        $tasks = $query->get();
+
         return ApiResponse::success($tasks, 'Volunteer tasks retrieved successfully');
     }
 
-    public function acceptTask($id)
+    public function updateTaskStatus($id, Request $request)
     {
         $task = Task::find($id);
         if (!$task) return ApiResponse::error('Task not found', 404);
 
-        $this->authorizeVolunteer($task);
-
-        if ($task->status !== 'pending') {
-            return ApiResponse::error('Task cannot be accepted', 400);
+        if (!$this->isVolunteerAuthorized($task)) {
+            return ApiResponse::error('Unauthorized', 403);
         }
 
-        $task->update(['status' => 'accepted']);
+        $data = $request->validate([
+            'action' => 'required|in:accept,reject,withdraw'
+        ]);
 
-        return ApiResponse::success($task, 'Task accepted successfully');
+        if ($data['action'] === 'withdraw') {
+            if ($task->status !== 'accepted') {
+                return ApiResponse::error('Task cannot be withdrawn', 400);
+            }
+
+            if (Carbon::now()->greaterThanOrEqualTo(Carbon::parse($task->start_time))) {
+                return ApiResponse::error('Cannot withdraw after start time', 400);
+            }
+
+            $task->update(['status' => 'withdrawn']);
+        }
+        elseif (in_array($data['action'], ['accept', 'reject'])) {
+            if ($task->status !== 'pending') {
+                return ApiResponse::error('Task cannot be updated for this action', 400);
+            }
+
+            $task->update(['status' => $data['action'] === 'accept' ? 'accepted' : 'rejected']);
+        }
+
+        return ApiResponse::success($task, "Task {$data['action']} successfully");
     }
 
-    public function rejectTask($id)
-    {
-        $task = Task::find($id);
-        if (!$task) return ApiResponse::error('Task not found', 404);
-
-        $this->authorizeVolunteer($task);
-
-        if ($task->status !== 'pending') {
-            return ApiResponse::error('Task cannot be rejected', 400);
-        }
-
-        $task->update(['status' => 'rejected']);
-
-        return ApiResponse::success($task, 'Task rejected successfully');
-    }
-
-    public function withdrawTask($id)
-    {
-        $task = Task::find($id);
-        if (!$task) return ApiResponse::error('Task not found', 404);
-
-        $this->authorizeVolunteer($task);
-
-        if ($task->status !== 'accepted') {
-            return ApiResponse::error('Task cannot be withdrawn', 400);
-        }
-
-        if (Carbon::now()->greaterThanOrEqualTo(Carbon::parse($task->start_time))) {
-            return ApiResponse::error('Cannot withdraw after start time', 400);
-        }
-
-        $task->update(['status' => 'withdrawn']);
-
-        return ApiResponse::success($task, 'Task withdrawn successfully');
-    }
-
-    //  تحديث الحالة للتاسك (active/completed)
     public function updateCompletionState(Request $request, $id)
     {
         $task = Task::find($id);
         if (!$task) return ApiResponse::error('Task not found', 404);
 
-        $this->authorizeVolunteer($task);
+        if (!$this->isVolunteerAuthorized($task)) {
+            return ApiResponse::error('Unauthorized', 403);
+        }
 
         $data = $request->validate([
             'completion_state' => 'required|in:active,completed'
@@ -163,19 +168,11 @@ class TaskController extends Controller
         return ApiResponse::success($task, 'Task completion state updated successfully');
     }
 
-/* ---------------- Private Helpers ---------------- */
+    /* ---------------- Private Helpers ---------------- */
 
-    private function authorizeSupervisor(Task $task)
+    private function isVolunteerAuthorized(Task $task): bool
     {
-        if ($task->supervisor_id !== Auth::id()) {
-            abort(ApiResponse::error('Unauthorized', 403));
-        }
-    }
-
-    private function authorizeVolunteer(Task $task)
-    {
-        if ($task->volunteer_id !== Auth::id()) {
-            abort(ApiResponse::error('Unauthorized', 403));
-        }
+        $volunteer = Auth::user()->volunteer;
+        return $volunteer && $task->volunteer_id === $volunteer->id;
     }
 }
