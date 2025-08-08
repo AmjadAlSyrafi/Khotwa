@@ -5,6 +5,7 @@ use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
 
+// Controllers for authentication and volunteer-related actions
 use App\Http\Controllers\API\Auth\{
     RegisterController,
     LoginController,
@@ -12,31 +13,36 @@ use App\Http\Controllers\API\Auth\{
     ForgotPasswordController,
     OtpController,
 };
+use App\Http\Controllers\API\Volunteer\ProfileController;
 
-use App\Http\Controllers\API\Volunteer\{
-    ProfileController,
-};
-
+// General controllers
 use App\Http\Controllers\{
     VolunteerController,
     ProjectController,
     EventController,
     EventRegistrationController
-
 };
 
+// Admin-specific controllers
 use App\Http\Controllers\Admin\{
     VolunteerApplicationController,
     VolunteerAdminController,
 };
-
 use App\Http\Controllers\Admin\UserManagementController;
 use App\Http\Controllers\SearchController;
 use App\Http\Controllers\TaskController;
+use App\Models\Volunteer;
 
-//
-//  Public Utility Routes
-//
+/*
+|--------------------------------------------------------------------------
+| Public & Utility Routes
+|--------------------------------------------------------------------------
+|
+| These routes are publicly accessible and do not require authentication.
+|
+*/
+
+//  Check database connection
 Route::get('/check-db', function () {
     try {
         return response()->json([
@@ -51,40 +57,49 @@ Route::get('/check-db', function () {
     }
 });
 
+//  Send a test email
 Route::post('/test-mail', function (Request $request) {
     $email = $request->input('email');
-
     if (!$email) {
         return response()->json(['message' => 'Please enter email.'], 422);
     }
-
     try {
         Mail::raw('Laravel API Test Email', function ($message) use ($email) {
             $message->to($email)->subject('Test Email API');
         });
-
         return response()->json(['message' => 'Email sent to: ' . $email]);
     } catch (\Exception $e) {
         return response()->json(['message' => 'Failed to send email.', 'error' => $e->getMessage()], 500);
     }
 });
 
-//Add volunteerApplication
+//  Submit a new volunteer application
 Route::post('/join-request', [VolunteerApplicationController::class, 'store']);
 
+/*
+|--------------------------------------------------------------------------
+| Authenticated User Info
+|--------------------------------------------------------------------------
+|
+| A route to get information about the currently authenticated user.
+|
+*/
 
-//
-//  Authenticated User Info
-//
+//  Get authenticated user data
 Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
     return $request->user();
 });
 
-//
-//  Authentication Routes Group
-//
-Route::prefix('auth')->group(function () {
+/*
+|--------------------------------------------------------------------------
+| Authentication Routes
+|--------------------------------------------------------------------------
+|
+| Includes routes for registration, login, logout, and password reset.
+|
+*/
 
+Route::prefix('auth')->group(function () {
     // 🔹 Registration
     Route::post('/register', [RegisterController::class, 'register']);
 
@@ -95,31 +110,51 @@ Route::prefix('auth')->group(function () {
     // 🔹 OTP Verification
     Route::post('/verify-otp', [OtpController::class, 'verify']);
 
-    // 🔹 Forgot & Reset Password
+    // 🔹 Password Reset
     Route::post('/forget-password', [ForgotPasswordController::class, 'sendResetOtp']);
     Route::post('/confirm-reset-password', [ForgotPasswordController::class, 'reset']);
-
 });
 
-//
-//  Admin Routes
-//
+/*
+|--------------------------------------------------------------------------
+| Admin Routes
+|--------------------------------------------------------------------------
+|
+| These routes require the user to be authenticated and have the "Admin" role.
+|
+*/
+
 Route::middleware(['auth:sanctum', 'role:Admin'])->prefix('admin')->group(function () {
+    // 🔹 User Management
     Route::apiResource('users', UserManagementController::class);
+
+    // 🔹 Volunteer Join Requests
     Route::get('/join-requests', [VolunteerApplicationController::class, 'index']);
     Route::post('/applications/approve', [VolunteerApplicationController::class, 'approve']);
-    Route::apiResource('projects', ProjectController::class);
+
+    // 🔹 Project Management
+    Route::apiResource('/projects', ProjectController::class);
+
+    // 🔹 Event Management
     Route::apiResource('/events', EventController::class);
-    Route::get('/volunteers', [VolunteerAdminController::class, 'index']);
-    Route::post('/volunteers', [VolunteerAdminController::class, 'store']);
-    Route::get('/volunteers/{id}', [VolunteerAdminController::class, 'show']);
-    Route::put('/volunteers/{id}', [VolunteerAdminController::class, 'update']);
-    Route::delete('/volunteers/{id}', [VolunteerAdminController::class, 'destroy']);
+
+    // 🔹 Volunteer Management
+    Route::apiResource('/volunteers', VolunteerController::class);
 });
 
-//  Supervisor Dashboard
-//
+/*
+|--------------------------------------------------------------------------
+| Supervisor Routes
+|--------------------------------------------------------------------------
+|
+| These routes require the user to be authenticated and have the "Supervisor" role.
+|
+*/
+
 Route::middleware(['auth:sanctum', 'role:Supervisor'])->prefix('supervisor')->group(function () {
+    // 🔹 Search volunteers
+    Route::get('/search/volunteers', [SearchController::class, 'searchVolunteers']);
+    Route::get('/volunteers', [VolunteerAdminController::class, 'index']);
     Route::get('/tasks', [TaskController::class, 'supervisorTasks']);
     Route::get('/tasks/{id}', [TaskController::class, 'supervisorShow']);
     Route::post('/tasks', [TaskController::class, 'createTask']);
@@ -127,29 +162,38 @@ Route::middleware(['auth:sanctum', 'role:Supervisor'])->prefix('supervisor')->gr
     Route::delete('/tasks/{id}', [TaskController::class, 'deleteTask']);
 });
 
-//
-// ✅ Volunteer Dashboard
-//
+/*
+|--------------------------------------------------------------------------
+| Volunteer Dashboard Routes
+|--------------------------------------------------------------------------
+|
+| These routes require the user to be authenticated and have the "Volunteer" role.
+|
+*/
+
 Route::middleware(['auth:sanctum', 'role:Volunteer'])->prefix('volunteer')->group(function () {
+    // 🔹 Change default password
     Route::post('/change-default-password', [ForgotPasswordController::class, 'changeDefaultPassword']);
+
+    // 🔹 Event registration and withdrawal
     Route::post('/event-register', [EventRegistrationController::class, 'register']);
     Route::post('/event-withdraw', [EventRegistrationController::class, 'withdraw']);
+
+    // 🔹 Get recommended events and top projects
     Route::get('/events/recommended', [EventController::class, 'recommended']);
     Route::get('/projects/top', [ProjectController::class, 'top']);
 
-    Route::get('/volunteer/profile', [ProfileController::class, 'show']);
-    Route::put('/volunteer/profile', [ProfileController::class, 'update']);
-    Route::get('/tasks', [TaskController::class, 'volunteerTasks']); 
+    // 🔹 Volunteer profile management
+    Route::get('/profile', [ProfileController::class, 'show']);
+    Route::put('/profile', [ProfileController::class, 'update']);
+    Route::get('/tasks', [TaskController::class, 'volunteerTasks']);
     Route::post('/tasks/{id}/accept', [TaskController::class, 'acceptTask']);
     Route::post('/tasks/{id}/reject', [TaskController::class, 'rejectTask']);
     Route::post('/tasks/{id}/withdraw', [TaskController::class, 'withdrawTask']);
     Route::post('/tasks/{id}/status', [TaskController::class, 'updateCompletionState']);
-});
 
-// راوتات البحث(المتطوع خاص للمشرف والباقي للكل )
-Route::prefix('search')->middleware(['auth:sanctum'])->group(function () {
-    Route::get('/volunteers', [SearchController::class, 'searchVolunteers'])->middleware('role:supervisor');
-    Route::get('/events', [SearchController::class, 'searchEvents']);
-    Route::get('/projects', [SearchController::class, 'searchProjects']);
+    // 🔹 Search events and projects
+    Route::get('search/events', [SearchController::class, 'searchEvents']);
+    Route::get('search/projects', [SearchController::class, 'searchProjects']);
 });
 
