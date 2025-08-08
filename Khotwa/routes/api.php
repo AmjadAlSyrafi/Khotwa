@@ -20,7 +20,8 @@ use App\Http\Controllers\{
     VolunteerController,
     ProjectController,
     EventController,
-    EventRegistrationController
+    EventRegistrationController,
+    AttendanceController
 };
 
 // Admin-specific controllers
@@ -140,6 +141,8 @@ Route::middleware(['auth:sanctum', 'role:Admin'])->prefix('admin')->group(functi
 
     // 🔹 Volunteer Management
     Route::apiResource('/volunteers', VolunteerController::class);
+
+   // Route::get('/search/volunteers', [SearchController::class, 'searchVolunteers']);
 });
 
 /*
@@ -152,15 +155,42 @@ Route::middleware(['auth:sanctum', 'role:Admin'])->prefix('admin')->group(functi
 */
 
 Route::middleware(['auth:sanctum', 'role:Supervisor'])->prefix('supervisor')->group(function () {
-    // 🔹 Search volunteers
+
+    /**
+     * Volunteer Management
+     */
     Route::get('/search/volunteers', [SearchController::class, 'searchVolunteers']);
     Route::get('/volunteers', [VolunteerAdminController::class, 'index']);
+
+    /**
+     * Events Management
+     */
+    Route::get('/events', [EventController::class, 'supervisorEvents']);
+    Route::get('/events/log', [EventController::class, 'supervisorEventLog']);
+    Route::get('/events/{eventId}/qr', [EventController::class, 'generateQrCode']);
+
+    /**
+     * Attendance Management
+     */
+    // View attendance list for a specific event
+    Route::get('/attendance/event/{eventId}', [AttendanceController::class, 'eventAttendance']);
+
+    // Get registered volunteers for a specific event (for manual check-in/out or feedback)
+    Route::get('/attendance/event/{eventId}/registrations', [AttendanceController::class, 'eventRegistrations']);
+
+    // Manually check-in or check-out volunteers
+    Route::post('/attendance/manual', [AttendanceController::class, 'manualAttendance']);
+
+    /**
+     * Tasks Management
+     */
     Route::get('/tasks', [TaskController::class, 'supervisorTasks']);
     Route::get('/tasks/{id}', [TaskController::class, 'supervisorShow']);
     Route::post('/tasks', [TaskController::class, 'createTask']);
     Route::put('/tasks/{id}', [TaskController::class, 'updateTask']);
     Route::delete('/tasks/{id}', [TaskController::class, 'deleteTask']);
 });
+
 
 /*
 |--------------------------------------------------------------------------
@@ -179,6 +209,9 @@ Route::middleware(['auth:sanctum', 'role:Volunteer'])->prefix('volunteer')->grou
     Route::post('/event-register', [EventRegistrationController::class, 'register']);
     Route::post('/event-withdraw', [EventRegistrationController::class, 'withdraw']);
 
+    Route::get('/events', [EventController::class, 'volunteerEvents']);
+    Route::get('/events/log', [EventController::class, 'volunteerEventLog']);
+
     // 🔹 Get recommended events and top projects
     Route::get('/events/recommended', [EventController::class, 'recommended']);
     Route::get('/projects/top', [ProjectController::class, 'top']);
@@ -186,14 +219,16 @@ Route::middleware(['auth:sanctum', 'role:Volunteer'])->prefix('volunteer')->grou
     // 🔹 Volunteer profile management
     Route::get('/profile', [ProfileController::class, 'show']);
     Route::put('/profile', [ProfileController::class, 'update']);
-    Route::get('/tasks', [TaskController::class, 'volunteerTasks']);
-    Route::post('/tasks/{id}/accept', [TaskController::class, 'acceptTask']);
-    Route::post('/tasks/{id}/reject', [TaskController::class, 'rejectTask']);
-    Route::post('/tasks/{id}/withdraw', [TaskController::class, 'withdrawTask']);
-    Route::post('/tasks/{id}/status', [TaskController::class, 'updateCompletionState']);
 
+    Route::get('/tasks', [TaskController::class, 'volunteerTasks']);
+    Route::post('/tasks/{id}/status', [TaskController::class, 'updateTaskStatus']);
+    Route::post('/tasks/{id}/completion', [TaskController::class, 'updateCompletionState']);
     // 🔹 Search events and projects
-    Route::get('search/events', [SearchController::class, 'searchEvents']);
-    Route::get('search/projects', [SearchController::class, 'searchProjects']);
+ //   Route::get('search/events', [SearchController::class, 'searchEvents']);
+   // Route::get('search/projects', [SearchController::class, 'searchProjects']);
+
+    Route::post('/attendance/check-in', [AttendanceController::class, 'checkIn']);
+    Route::post('/attendance/check-out', [AttendanceController::class, 'checkOut']);
+    Route::get('/attendance/volunteer/log', [AttendanceController::class, 'volunteerAttendanceLog']);
 });
 

@@ -83,7 +83,7 @@ public function top()
                 'activity_score' => $activityScore,
             ];
         })
-        ->sortByDesc('activity_score') // ترتيب حسب النشاط الكلي
+        ->sortByDesc('activity_score')
         ->values();
 
     return ApiResponse::success($projects, 'Top projects fetched successfully.');

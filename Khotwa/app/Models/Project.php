@@ -10,7 +10,6 @@ class Project extends Model
 {
     /** @use HasFactory<\Database\Factories\ProjectFactory> */
     use HasFactory;
-    use Searchable;
 
     protected $fillable = [
         'name',

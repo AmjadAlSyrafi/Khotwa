@@ -5,7 +5,6 @@ namespace App\Http\Controllers;
 use App\Models\EventRegistration;
 use App\Models\Event;
 use App\Http\Requests\StoreEventRegistrationRequest;
-use App\Http\Requests\UpdateEventRegistrationRequest;
 use Illuminate\Support\Facades\Auth;
 use App\Helpers\ApiResponse;
 
@@ -32,9 +31,13 @@ class EventRegistrationController extends Controller
             return ApiResponse::error('Event is not open for registration.', 400);
         }
 
+        if ($event->current_volunteers >= $event->required_volunteers) {
+            return ApiResponse::error('Event has reached the maximum number of volunteers.', 400);
+        }
+
         $existing = EventRegistration::where('volunteer_id', $volunteer->id)
-                                     ->where('event_id', $event->id)
-                                     ->first();
+            ->where('event_id', $event->id)
+            ->first();
 
         if ($existing) {
             return ApiResponse::error('You have already registered for this event.', 409);
@@ -46,6 +49,9 @@ class EventRegistrationController extends Controller
             'status' => 'pending',
             'joined_at' => now(),
         ]);
+
+        // Increment current volunteers count
+        $event->increment('current_volunteers');
 
         return ApiResponse::success($registration, 'Registration successful.');
     }
@@ -66,8 +72,8 @@ class EventRegistrationController extends Controller
         }
 
         $registration = EventRegistration::where('volunteer_id', $volunteer->id)
-                                         ->where('event_id', $request->event_id)
-                                         ->first();
+            ->where('event_id', $request->event_id)
+            ->first();
 
         if (!$registration) {
             return ApiResponse::error('You are not registered for this event.', 404);
@@ -80,61 +86,12 @@ class EventRegistrationController extends Controller
         $registration->status = 'withdrawn';
         $registration->save();
 
+        // Decrement current volunteers count
+        $event = Event::find($request->event_id);
+        if ($event && $event->current_volunteers > 0) {
+            $event->decrement('current_volunteers');
+        }
+
         return ApiResponse::success($registration, 'You have successfully withdrawn from the event.');
-    }
-    /**
-     * Display a listing of the resource.
-     */
-    public function index()
-    {
-        //
-    }
-
-    /**
-     * Show the form for creating a new resource.
-     */
-    public function create()
-    {
-        //
-    }
-
-    /**
-     * Store a newly created resource in storage.
-     */
-    public function store(StoreEventRegistrationRequest $request)
-    {
-        //
-    }
-
-    /**
-     * Display the specified resource.
-     */
-    public function show(EventRegistration $eventRegistration)
-    {
-        //
-    }
-
-    /**
-     * Show the form for editing the specified resource.
-     */
-    public function edit(EventRegistration $eventRegistration)
-    {
-        //
-    }
-
-    /**
-     * Update the specified resource in storage.
-     */
-    public function update(UpdateEventRegistrationRequest $request, EventRegistration $eventRegistration)
-    {
-        //
-    }
-
-    /**
-     * Remove the specified resource from storage.
-     */
-    public function destroy(EventRegistration $eventRegistration)
-    {
-        //
     }
 }
