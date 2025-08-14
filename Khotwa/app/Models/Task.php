@@ -17,6 +17,14 @@ class Task extends Model
         'volunteer_id',
         'start_time',
         'status',          //pending, accepted, rejected, applogize
-        'completion_state' //active, completed
+        'completion_state', //active, completed
+        'volunteer_hours',
+
     ];
+
+    public function volunteer()
+{
+    return $this->belongsTo(Volunteer::class);
+}
+
 }

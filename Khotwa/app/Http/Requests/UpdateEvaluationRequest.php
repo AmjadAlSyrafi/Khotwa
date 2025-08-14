@@ -2,27 +2,31 @@
 
 namespace App\Http\Requests;
 
-use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Support\Facades\Auth;
 
-class UpdateEvaluationRequest extends FormRequest
+class UpdateEvaluationRequest extends BaseFormRequest
 {
-    /**
-     * Determine if the user is authorized to make this request.
-     */
     public function authorize(): bool
     {
-        return false;
+        return Auth::check();
     }
 
-    /**
-     * Get the validation rules that apply to the request.
-     *
-     * @return array<string, \Illuminate\Contracts\Validation\ValidationRule|array<mixed>|string>
-     */
     public function rules(): array
     {
         return [
-            //
+            'punctuality'  => ['sometimes', 'integer', 'between:1,5'],
+            'work_quality' => ['sometimes', 'integer', 'between:1,5'],
+            'teamwork'     => ['sometimes', 'integer', 'between:1,5'],
+            'initiative'   => ['sometimes', 'integer', 'between:1,5'],
+            'discipline'   => ['sometimes', 'integer', 'between:1,5'],
+
+            'initiated' => ['sometimes', 'boolean'],
+            'mentored' => ['sometimes', 'boolean'],
+            'creative_contribution' => ['sometimes', 'boolean'],
+            'impactful' => ['sometimes', 'boolean'],
+            'inspirational' => ['sometimes', 'boolean'],
+
+            'notes'        => ['nullable', 'string'],
         ];
     }
 }

@@ -21,7 +21,9 @@ use App\Http\Controllers\{
     ProjectController,
     EventController,
     EventRegistrationController,
-    AttendanceController
+    AttendanceController,
+    EvaluationController,
+    BadgeController
 };
 
 // Admin-specific controllers
@@ -138,6 +140,12 @@ Route::middleware(['auth:sanctum', 'role:Admin'])->prefix('admin')->group(functi
 
     // 🔹 Event Management
     Route::apiResource('/events', EventController::class);
+    Route::get('/events/{eventId}/evaluations', [EvaluationController::class, 'indexForEvent']);
+
+    // Badges
+    Route::get('/badges/all', [BadgeController::class, 'allBadges']);
+    Route::post('/badges/sync/{volunteerId}', [BadgeController::class, 'syncAllForVolunteer']);
+    Route::get('/badges/{volunteerId}', [BadgeController::class, 'volunteerBadges']);
 
     // 🔹 Volunteer Management
     Route::apiResource('/volunteers', VolunteerController::class);
@@ -189,6 +197,19 @@ Route::middleware(['auth:sanctum', 'role:Supervisor'])->prefix('supervisor')->gr
     Route::post('/tasks', [TaskController::class, 'createTask']);
     Route::put('/tasks/{id}', [TaskController::class, 'updateTask']);
     Route::delete('/tasks/{id}', [TaskController::class, 'deleteTask']);
+
+    /**
+     * Evaluation Management
+     */
+    Route::post('/evaluations', [EvaluationController::class, 'store']);
+    Route::put('/evaluations/{id}', [EvaluationController::class, 'update']);
+    Route::delete('/evaluations/{id}', [EvaluationController::class, 'destroy']);
+    Route::get('/events/{eventId}/evaluations', [EvaluationController::class, 'indexForEvent']);
+    Route::get('/evaluations/{id}', [EvaluationController::class, 'show']);
+    //list badges for Volunteer
+    Route::get('/badges/all', [BadgeController::class, 'allBadges']);
+    Route::get('/badges/{volunteerId}', [BadgeController::class, 'volunteerBadges']);
+
 });
 
 
@@ -230,5 +251,9 @@ Route::middleware(['auth:sanctum', 'role:Volunteer'])->prefix('volunteer')->grou
     Route::post('/attendance/check-in', [AttendanceController::class, 'checkIn']);
     Route::post('/attendance/check-out', [AttendanceController::class, 'checkOut']);
     Route::get('/attendance/volunteer/log', [AttendanceController::class, 'volunteerAttendanceLog']);
+
+    Route::get('/evaluations', [EvaluationController::class, 'myEvaluations']);
+    //Badges
+    Route::get('/badges', [BadgeController::class, 'myBadges']);
 });
 
