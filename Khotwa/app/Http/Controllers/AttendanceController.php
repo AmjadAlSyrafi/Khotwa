@@ -9,9 +9,14 @@ use App\Http\Requests\UpdateAttendanceRequest;
 use Illuminate\Support\Facades\Auth;
 use App\Helpers\ApiResponse;
 use Illuminate\Support\Facades\DB;
+use Carbon\Carbon;
+use App\Services\BadgeService;
 
 class AttendanceController extends Controller
 {
+
+public function __construct(private BadgeService $badgeService) {}
+
     /**
      * Volunteer QR Check-in
      */
@@ -55,7 +60,8 @@ class AttendanceController extends Controller
             ]);
 
             $event->increment('current_volunteers');
-
+            //Badges Service
+            $this->badgeService->syncAfterAttendance($volunteer->id);
             return ApiResponse::success([], 'Check-in successful via QR.');
         }
 
@@ -106,8 +112,13 @@ class AttendanceController extends Controller
             }
 
             $attendance->checkout_time = now();
-            $attendance->save();
 
+            $hours = Carbon::parse($attendance->checkin_time)->diffInHours($attendance->checkout_time);
+            if ($hours > 0) {
+                $volunteer->increment('total_volunteer_hours', $hours);
+            }
+
+            $attendance->save();
             $event->decrement('current_volunteers');
 
             return ApiResponse::success([], 'Check-out successful via QR.');
@@ -149,12 +160,20 @@ class AttendanceController extends Controller
                             'supervisor_id'  => $user->id,
                         ]);
                         $event->increment('current_volunteers');
+                        //Badges Service
+                        $this->badgeService->syncAfterAttendance($volunteerId);
                     }
                 }
 
                 if ($data['action'] === 'checkout') {
                     if ($attendance && !$attendance->checkout_time) {
                         $attendance->checkout_time = now();
+
+                        $hours = Carbon::parse($attendance->checkin_time)->diffInHours($attendance->checkout_time);
+                        if ($hours > 0) {
+                            $attendance->volunteer->increment('total_volunteer_hours', $hours);
+                        }
+
                         $attendance->save();
                         $event->decrement('current_volunteers');
                     }

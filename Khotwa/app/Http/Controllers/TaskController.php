@@ -3,9 +3,11 @@
 namespace App\Http\Controllers;
 
 use App\Models\Task;
+use App\Models\Volunteer;
 use App\Helpers\ApiResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
 
 class TaskController extends Controller
@@ -15,10 +17,11 @@ class TaskController extends Controller
     public function createTask(Request $request)
     {
         $data = $request->validate([
-            'title'        => 'required|string|max:255',
-            'description'  => 'required|string',
-            'volunteer_id' => 'required|exists:volunteers,id',
-            'start_time'   => 'required|date'
+            'title'           => 'required|string|max:255',
+            'description'     => 'required|string',
+            'volunteer_id'    => 'required|exists:volunteers,id',
+            'start_time'      => 'required|date',
+            'volunteer_hours' => 'required|integer|min:0'
         ]);
 
         $data['supervisor_id'] = Auth::id();
@@ -42,9 +45,10 @@ class TaskController extends Controller
         }
 
         $data = $request->validate([
-            'title'       => 'sometimes|string|max:255',
-            'description' => 'sometimes|string',
-            'start_time'  => 'sometimes|date'
+            'title'           => 'sometimes|string|max:255',
+            'description'     => 'sometimes|string',
+            'start_time'      => 'sometimes|date',
+            'volunteer_hours' => 'sometimes|integer|min:0'
         ]);
 
         $task->update($data);
@@ -163,7 +167,16 @@ class TaskController extends Controller
             'completion_state' => 'required|in:active,completed'
         ]);
 
-        $task->update(['completion_state' => $data['completion_state']]);
+        DB::transaction(function () use ($task, $data) {
+            $task->update(['completion_state' => $data['completion_state']]);
+
+            if ($data['completion_state'] === 'completed' && $task->volunteer_hours > 0) {
+                $volunteer = $task->volunteer ?? null;
+                if ($volunteer) {
+                    $volunteer->increment('total_volunteer_hours', $task->volunteer_hours);
+                }
+            }
+        });
 
         return ApiResponse::success($task, 'Task completion state updated successfully');
     }

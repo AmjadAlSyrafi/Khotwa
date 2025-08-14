@@ -31,6 +31,7 @@ protected $fillable = [
     'emergency_contact_phone',
     'emergency_contact_relationship',
     'user_id',
+    'total_volunteer_hours',
 ];
 
 public function toSearchableArray()
@@ -66,6 +67,13 @@ public function toSearchableArray()
     'availability' => 'array',
     'interests' => 'array',
 ];
+
+    public function badges() {
+        return $this->belongsToMany(Badge::class, 'volunteer_badges')
+            ->withPivot(['awarded_at'])
+            ->withTimestamps();
+    }
+
 
 }
 
