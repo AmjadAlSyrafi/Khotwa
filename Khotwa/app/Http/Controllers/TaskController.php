@@ -7,6 +7,7 @@ use App\Helpers\ApiResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Carbon\Carbon;
+use App\Services\NotificationService;
 
 class TaskController extends Controller
 {
@@ -28,6 +29,12 @@ class TaskController extends Controller
         $task = Task::create($data);
 
         return ApiResponse::success($task, 'Task created successfully', 201);
+
+        // إرسال إشعار للمتطوع
+    $volunteer = Volunteer::find($data['volunteer_id']);
+    NotificationService::notifyVolunteerTaskAssigned($volunteer, $task);
+
+    return ApiResponse::success($task, 'Task created successfully', 201);
     }
 
     public function updateTask(Request $request, $id)
@@ -148,6 +155,13 @@ class TaskController extends Controller
         }
 
         return ApiResponse::success($task, "Task {$data['action']} successfully");
+
+        // إرسال إشعار بحالة المهمة
+    $volunteer = $task->volunteer;
+    $status = $data['action'] === 'accept' ? 'accepted' : 'rejected';
+    NotificationService::notifyVolunteerTaskStatusChanged($volunteer, $task, $status);
+
+    return ApiResponse::success($task, "Task {$data['action']} successfully");
     }
 
     public function updateCompletionState(Request $request, $id)
@@ -166,6 +180,13 @@ class TaskController extends Controller
         $task->update(['completion_state' => $data['completion_state']]);
 
         return ApiResponse::success($task, 'Task completion state updated successfully');
+
+        // إرسال إشعار إذا تم تغيير حالة الإنجاز
+    $volunteer = $task->volunteer;
+    $status = $data['completion_state'] === 'completed' ? 'مكتملة' : 'نشطة';
+    NotificationService::notifyVolunteerTaskStatusChanged($volunteer, $task, $status);
+
+    return ApiResponse::success($task, 'Task completion state updated successfully');
     }
 
     /* ---------------- Private Helpers ---------------- */

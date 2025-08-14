@@ -5,6 +5,9 @@ namespace App\Http\Controllers;
 use App\Models\Notification;
 use App\Http\Requests\StoreNotificationRequest;
 use App\Http\Requests\UpdateNotificationRequest;
+use App\Helpers\ApiResponse;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 
 class NotificationController extends Controller
 {
@@ -13,47 +16,35 @@ class NotificationController extends Controller
      */
     public function index()
     {
-        //
+         $user = Auth::user();
+        $notifications = $user->notifications()
+                            ->orderBy('created_at', 'desc')
+                            ->get();
+
+        return ApiResponse::success($notifications, 'Notifications retrieved successfully');
     }
 
-    /**
-     * Show the form for creating a new resource.
-     */
-    public function create()
+    // وضع علامة مقروءة للااشعار 
+    public function markAsRead($id)
     {
-        //
+        $notification = Auth::user()->notifications()->find($id);
+
+        if (!$notification) {
+            return ApiResponse::error('Notification not found', 404);
+        }
+
+        $notification->markAsRead();
+
+        return ApiResponse::success(null, 'Notification marked as read');
     }
 
-    /**
-     * Store a newly created resource in storage.
-     */
-    public function store(StoreNotificationRequest $request)
-    {
-        //
-    }
+    // وضع علامة على كل الإشعارات كمقروءة
 
-    /**
-     * Display the specified resource.
-     */
-    public function show(Notification $notification)
+    public function markAllAsRead()
     {
-        //
-    }
+        Auth::user()->unreadNotifications->markAsRead();
 
-    /**
-     * Show the form for editing the specified resource.
-     */
-    public function edit(Notification $notification)
-    {
-        //
-    }
-
-    /**
-     * Update the specified resource in storage.
-     */
-    public function update(UpdateNotificationRequest $request, Notification $notification)
-    {
-        //
+        return ApiResponse::success(null, 'All notifications marked as read');
     }
 
     /**
@@ -61,6 +52,14 @@ class NotificationController extends Controller
      */
     public function destroy(Notification $notification)
     {
-        //
+        $notification = Auth::user()->notifications()->find($id);
+
+        if (!$notification) {
+            return ApiResponse::error('Notification not found', 404);
+        }
+
+        $notification->delete();
+
+        return ApiResponse::success(null, 'Notification deleted successfully');
     }
 }

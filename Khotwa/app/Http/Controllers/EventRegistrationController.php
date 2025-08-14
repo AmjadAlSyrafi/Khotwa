@@ -7,6 +7,7 @@ use App\Models\Event;
 use App\Http\Requests\StoreEventRegistrationRequest;
 use Illuminate\Support\Facades\Auth;
 use App\Helpers\ApiResponse;
+use App\Services\NotificationService;
 
 class EventRegistrationController extends Controller
 {
@@ -54,6 +55,11 @@ class EventRegistrationController extends Controller
         $event->increment('current_volunteers');
 
         return ApiResponse::success($registration, 'Registration successful.');
+
+        // عند قبول التسجيل في الفعالية (التنفيذ من قبل المشرف)
+       NotificationService::notifyVolunteerEventAccepted($volunteer, $event);
+
+       return ApiResponse::success($registration, 'Registration successful.');
     }
 
     /**

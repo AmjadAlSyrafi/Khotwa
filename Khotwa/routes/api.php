@@ -33,6 +33,7 @@ use App\Http\Controllers\Admin\UserManagementController;
 use App\Http\Controllers\SearchController;
 use App\Http\Controllers\TaskController;
 use App\Models\Volunteer;
+use App\Http\Controllers\NotificationController;
 
 /*
 |--------------------------------------------------------------------------
@@ -230,5 +231,14 @@ Route::middleware(['auth:sanctum', 'role:Volunteer'])->prefix('volunteer')->grou
     Route::post('/attendance/check-in', [AttendanceController::class, 'checkIn']);
     Route::post('/attendance/check-out', [AttendanceController::class, 'checkOut']);
     Route::get('/attendance/volunteer/log', [AttendanceController::class, 'volunteerAttendanceLog']);
+
+    // notification about volunteer & supervisor
+    Route::middleware('auth:sanctum')->group(function () {
+    Route::get('/notifications', [NotificationController::class, 'index']);
+    Route::post('/notifications/{id}/read', [NotificationController::class, 'markAsRead']);
+    Route::post('/notifications/read-all', [NotificationController::class, 'markAllAsRead']);
+    Route::delete('/notifications/{id}', [NotificationController::class, 'destroy']);
+});
+
 });
 
