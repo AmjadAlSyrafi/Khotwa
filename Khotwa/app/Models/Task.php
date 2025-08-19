@@ -19,7 +19,7 @@ class Task extends Model
         'status',          //pending, accepted, rejected, applogize
         'completion_state', //active, completed
         'volunteer_hours',
-
+        'due_date'
     ];
 
     public function volunteer()
