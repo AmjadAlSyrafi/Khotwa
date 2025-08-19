@@ -30,7 +30,7 @@ class UpdateEventRequest extends FormRequest
             'location'        => ['sometimes', 'string'],
             'lat'             => ['sometimes', 'nullable', 'numeric'],
             'lng'             => ['sometimes', 'nullable', 'numeric'],
-            'status'          => ['sometimes', 'in:open,closed,completed'],
+            'status'          => ['sometimes', 'in:open,closed,completed,upcoming'],
             'project_id'      => ['sometimes', 'exists:projects,id'],
             'required_volunteers' => ['sometimes', 'integer', 'min:1'],
             'registered_count' => ['sometimes', 'nullable', 'integer', 'min:0'],

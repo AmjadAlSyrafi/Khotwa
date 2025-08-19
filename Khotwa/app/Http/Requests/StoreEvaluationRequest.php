@@ -33,6 +33,9 @@ class StoreEvaluationRequest extends BaseFormRequest
 
             'notes'        => ['nullable', 'string'],
 
+            'warning_reason'        => ['sometimes', 'string'],
+
+
         ];
     }
 }

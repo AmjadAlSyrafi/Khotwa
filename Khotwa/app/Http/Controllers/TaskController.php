@@ -21,6 +21,7 @@ class TaskController extends Controller
             'description'     => 'required|string',
             'volunteer_id'    => 'required|exists:volunteers,id',
             'start_time'      => 'required|date',
+            'due_date'      => 'required|date',
             'volunteer_hours' => 'required|integer|min:0'
         ]);
 

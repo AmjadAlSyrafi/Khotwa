@@ -30,7 +30,7 @@ class StoreEventRequest extends BaseFormRequest
             'location'        => ['required', 'string'],
             'lat'             => ['nullable', 'numeric'],
             'lng'             => ['nullable', 'numeric'],
-            'status'          => ['required', 'in:open,closed,completed'],
+            'status'          => ['required', 'in:open,closed,completed,upcoming'],
             'project_id'      => ['required', 'exists:projects,id'],
             'required_volunteers' => ['required', 'integer', 'min:1'],
             'registered_count' => ['nullable', 'integer', 'min:0'],

@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\Volunteer;
+use App\Models\Role;
 use App\Helpers\ApiResponse;
 
 class VolunteerAdminController extends Controller
@@ -72,4 +73,49 @@ class VolunteerAdminController extends Controller
         $volunteer->delete();
         return ApiResponse::success(null, 'Volunteer deleted successfully');
     }
+
+    /**
+     * Promote volunteer to supervisor.
+     */
+    public function promote($id)
+    {
+        $volunteer = Volunteer::find($id);
+        if (!$volunteer) {
+            return ApiResponse::error('Volunteer not found', 404);
+        }
+
+        $user = $volunteer->user;
+        if (!$user) {
+            return ApiResponse::error('User not found for this volunteer', 404);
+        }
+
+        // role_id = 2 -> Supervisor   (Make sure)
+        $user->role_id = Role::where('name','Supervisor')->value('id');
+        $user->save();
+
+        return ApiResponse::success($user,'Volunteer promoted to Supervisor successfully');
+    }
+
+    /**
+     * Demote supervisor back to volunteer.
+     */
+    public function demote($id)
+    {
+        $volunteer = Volunteer::find($id);
+        if (!$volunteer) {
+            return ApiResponse::error('Volunteer not found', 404);
+        }
+
+        $user = $volunteer->user;
+        if (!$user) {
+            return ApiResponse::error('User not found for this volunteer', 404);
+        }
+
+        // role_id = Volunteer
+        $user->role_id =Role::where('name','Volunteer')->value('id');
+        $user->save();
+
+        return ApiResponse::success($user,'Supervisor role removed and set back to Volunteer');
+    }
+
 }

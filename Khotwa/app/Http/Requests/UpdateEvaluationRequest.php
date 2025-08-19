@@ -27,6 +27,9 @@ class UpdateEvaluationRequest extends BaseFormRequest
             'inspirational' => ['sometimes', 'boolean'],
 
             'notes'        => ['nullable', 'string'],
+
+            'warning_reason'        => ['sometimes', 'string'],
+
         ];
     }
 }

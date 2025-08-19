@@ -23,7 +23,9 @@ use App\Http\Controllers\{
     EventRegistrationController,
     AttendanceController,
     EvaluationController,
-    BadgeController
+    BadgeController,
+    WarningController,
+    EventFeedbackController
 };
 
 // Admin-specific controllers
@@ -150,6 +152,19 @@ Route::middleware(['auth:sanctum', 'role:Admin'])->prefix('admin')->group(functi
     // 🔹 Volunteer Management
     Route::apiResource('/volunteers', VolunteerController::class);
 
+    Route::get('/warnings', [WarningController::class,'index']);
+    Route::post('/warnings/{id}/approve', [WarningController::class,'approve']);
+    Route::post('/warnings/{id}/reject', [WarningController::class,'reject']);
+
+
+    Route::post('/volunteers/{id}/promote', [VolunteerAdminController::class,'promote']);
+    Route::post('/volunteers/{id}/demote',  [VolunteerAdminController::class,'demote']);
+
+    //Voulnteer Feadback
+    Route::get('/events/{eventId}/feedback', [EventFeedbackController::class,'indexByEvent']);
+
+    Route::get('/feedback/volunteer/{volunteerId}', [EventFeedbackController::class,'feedbackForVolunteer']);
+
    // Route::get('/search/volunteers', [SearchController::class, 'searchVolunteers']);
 });
 
@@ -210,6 +225,11 @@ Route::middleware(['auth:sanctum', 'role:Supervisor'])->prefix('supervisor')->gr
     Route::get('/badges/all', [BadgeController::class, 'allBadges']);
     Route::get('/badges/{volunteerId}', [BadgeController::class, 'volunteerBadges']);
 
+    //Voulnteer Feadback
+    Route::get('/events/{eventId}/feedback', [EventFeedbackController::class,'indexByEvent']);
+
+    Route::get('/feedback/volunteer/{volunteerId}', [EventFeedbackController::class,'feedbackForVolunteer']);
+
 });
 
 
@@ -255,5 +275,9 @@ Route::middleware(['auth:sanctum', 'role:Volunteer'])->prefix('volunteer')->grou
     Route::get('/evaluations', [EvaluationController::class, 'myEvaluations']);
     //Badges
     Route::get('/badges', [BadgeController::class, 'myBadges']);
+
+    //Feadback
+    Route::post('/feedback', [EventFeedbackController::class,'store']);
+    Route::get('/feedback/event/{eventId}', [EventFeedbackController::class,'myEventFeedback']);
 });
 
