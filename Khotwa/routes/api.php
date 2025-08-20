@@ -25,7 +25,9 @@ use App\Http\Controllers\{
     EvaluationController,
     BadgeController,
     WarningController,
-    EventFeedbackController
+    EventFeedbackController,
+    DonationController,
+    ExpenseController
 };
 
 // Admin-specific controllers
@@ -36,7 +38,6 @@ use App\Http\Controllers\Admin\{
 use App\Http\Controllers\Admin\UserManagementController;
 use App\Http\Controllers\SearchController;
 use App\Http\Controllers\TaskController;
-use App\Models\Volunteer;
 
 /*
 |--------------------------------------------------------------------------
@@ -46,37 +47,6 @@ use App\Models\Volunteer;
 | These routes are publicly accessible and do not require authentication.
 |
 */
-
-//  Check database connection
-Route::get('/check-db', function () {
-    try {
-        return response()->json([
-            'message' => 'Connection to DB is successful.',
-            'database' => DB::connection()->getDatabaseName()
-        ]);
-    } catch (\Exception $e) {
-        return response()->json([
-            'message' => 'DB connection failed.',
-            'error' => $e->getMessage()
-        ], 500);
-    }
-});
-
-//  Send a test email
-Route::post('/test-mail', function (Request $request) {
-    $email = $request->input('email');
-    if (!$email) {
-        return response()->json(['message' => 'Please enter email.'], 422);
-    }
-    try {
-        Mail::raw('Laravel API Test Email', function ($message) use ($email) {
-            $message->to($email)->subject('Test Email API');
-        });
-        return response()->json(['message' => 'Email sent to: ' . $email]);
-    } catch (\Exception $e) {
-        return response()->json(['message' => 'Failed to send email.', 'error' => $e->getMessage()], 500);
-    }
-});
 
 //  Submit a new volunteer application
 Route::post('/join-request', [VolunteerApplicationController::class, 'store']);
@@ -118,6 +88,26 @@ Route::prefix('auth')->group(function () {
     // 🔹 Password Reset
     Route::post('/forget-password', [ForgotPasswordController::class, 'sendResetOtp']);
     Route::post('/confirm-reset-password', [ForgotPasswordController::class, 'reset']);
+});
+
+/*
+|--------------------------------------------------------------------------
+| Donatios Routes
+|--------------------------------------------------------------------------
+|
+| These routes require the user to be authenticated and have the Donor.
+|
+*/
+Route::middleware(['auth:sanctum'])->prefix('donatios')->group(function () {
+    //Donations
+    // Step 1: Initialize a donation record and get back a donation_id
+    Route::post('/donate/init', [DonationController::class, 'init'])->name('donations.init');
+
+    // Step 2: Confirm the donation status after payment processing
+    Route::post('/donate/confirm', [DonationController::class, 'confirm'])->name('donations.confirm');
+
+    // Authenticated User Endpoint
+    Route::get('/my-donations', [DonationController::class, 'myDonations'])->name('donations.mine');
 });
 
 /*
@@ -164,6 +154,24 @@ Route::middleware(['auth:sanctum', 'role:Admin'])->prefix('admin')->group(functi
     Route::get('/events/{eventId}/feedback', [EventFeedbackController::class,'indexByEvent']);
 
     Route::get('/feedback/volunteer/{volunteerId}', [EventFeedbackController::class,'feedbackForVolunteer']);
+
+    Route::apiResource('/donations', DonationController::class);
+
+    // Donations
+    // Step 1: Initialize a donation record and get back a donation_id
+    Route::post('/donate/init', [DonationController::class, 'init'])->name('donations.init');
+
+    // Step 2: Confirm the donation status after payment processing
+    Route::post('/donate/confirm', [DonationController::class, 'confirm'])->name('donations.confirm');
+
+    // list donations
+    Route::get('/projects/{project}/donations', [DonationController::class, 'listByProject'])->name('projects.donations');
+    Route::get('/events/{event}/donations', [DonationController::class, 'listByEvent'])->name('events.donations');
+
+    // Admin Statistics
+    Route::get('/donations-statistics', [DonationController::class, 'statistics'])->name('donations.stats');
+
+    Route::apiResource('expenses', ExpenseController::class);
 
    // Route::get('/search/volunteers', [SearchController::class, 'searchVolunteers']);
 });
