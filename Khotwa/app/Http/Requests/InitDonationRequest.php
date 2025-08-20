@@ -4,12 +4,14 @@ namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
 
-class StoreExpenseRequest extends BaseFormRequest
+class InitDonationRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.
+     *
+     * @return bool
      */
-    public function authorize(): bool
+    public function authorize()
     {
         return true;
     }
@@ -17,17 +19,17 @@ class StoreExpenseRequest extends BaseFormRequest
     /**
      * Get the validation rules that apply to the request.
      *
-     * @return array<string, \Illuminate\Contracts\Validation\ValidationRule|array<mixed>|string>
+     * @return array<string, mixed>
      */
-    public function rules(): array
+    public function rules()
     {
         return [
-            'title'       => 'required|string|max:100',
-            'description' => 'nullable|string',
-            'amount'      => 'required|numeric|min:0',
-            'date'        => 'required|date',
+            'amount'      => 'required|numeric|min:1',
             'project_id'  => 'nullable|exists:projects,id',
             'event_id'    => 'nullable|exists:events,id',
+            'donor_name'  => 'nullable|string|max:100',
+            'donor_email' => 'nullable|email|max:100',
+            'type'        => 'required|string|in:cash,in-kind',
         ];
     }
 }
