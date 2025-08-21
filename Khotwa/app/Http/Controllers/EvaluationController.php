@@ -12,12 +12,16 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Database\QueryException;
 use App\Helpers\ApiResponse;
 use App\Services\BadgeService;
+use App\Services\LeaderboardService;
 use App\Http\Resources\EvaluationResource;
 use App\Http\Resources\EvaluationLiteResource;
 
 class EvaluationController extends Controller
 {
-    public function __construct(private BadgeService $badgeService) {}
+    public function __construct(
+        private BadgeService $badgeService,
+        private LeaderboardService $leaderboardService
+    ) {}
 
     public function store(StoreEvaluationRequest $request)
     {
@@ -76,6 +80,27 @@ class EvaluationController extends Controller
 
             // Sync badges
             $this->badgeService->syncAfterEvaluation($evaluation->volunteer_id);
+
+            // Score Service
+            if ($evaluation->inspirational) {
+                $this->leaderboardService->addScore($evaluation->volunteer_id, 3);
+            }
+
+            if ($evaluation->average_rating >= 4.5) {
+                $this->leaderboardService->addScore($evaluation->volunteer_id, 10);
+            }
+
+            if ($evaluation->average_rating >= 4.0) {
+                $this->leaderboardService->addScore($evaluation->volunteer_id, 7);
+            }
+
+            if ($evaluation->average_rating >= 3.5) {
+                $this->leaderboardService->addScore($evaluation->volunteer_id, 4);
+            }
+
+            if ($evaluation->average_rating >= 3.0) {
+                $this->leaderboardService->addScore($evaluation->volunteer_id, 3);
+            }
 
             // Optional warning
             if (!empty($data['warning_reason'])) {

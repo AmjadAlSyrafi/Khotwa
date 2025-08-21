@@ -2,65 +2,41 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Leaderboard;
-use App\Http\Requests\StoreLeaderboardRequest;
-use App\Http\Requests\UpdateLeaderboardRequest;
+use App\Helpers\ApiResponse;
+use App\Http\Resources\LeaderboardResource;
+use App\Services\LeaderboardService;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 
 class LeaderboardController extends Controller
 {
+    public function __construct(private LeaderboardService $leaderboardService) {}
+
     /**
-     * Display a listing of the resource.
+     * Admin / Public - View top leaderboard.
      */
-    public function index()
+    public function index(Request $request)
     {
-        //
+        $limit = $request->query('limit', 5);
+        $leaders = $this->leaderboardService->top($limit);
+
+        return ApiResponse::success(LeaderboardResource::collection($leaders));
     }
 
     /**
-     * Show the form for creating a new resource.
+     * Volunteer - View my rank.
      */
-    public function create()
+    public function myRank()
     {
-        //
-    }
+        $volunteer = optional(Auth::user())->volunteer;
+        if (!$volunteer) {
+            return ApiResponse::error('Only volunteers can access rank.', 403);
+        }
 
-    /**
-     * Store a newly created resource in storage.
-     */
-    public function store(StoreLeaderboardRequest $request)
-    {
-        //
-    }
-
-    /**
-     * Display the specified resource.
-     */
-    public function show(Leaderboard $leaderboard)
-    {
-        //
-    }
-
-    /**
-     * Show the form for editing the specified resource.
-     */
-    public function edit(Leaderboard $leaderboard)
-    {
-        //
-    }
-
-    /**
-     * Update the specified resource in storage.
-     */
-    public function update(UpdateLeaderboardRequest $request, Leaderboard $leaderboard)
-    {
-        //
-    }
-
-    /**
-     * Remove the specified resource from storage.
-     */
-    public function destroy(Leaderboard $leaderboard)
-    {
-        //
+        $rank = $this->leaderboardService->rank($volunteer->id);
+        return ApiResponse::success([
+            'volunteer_id' => $volunteer->id,
+            'rank' => $rank,
+        ]);
     }
 }

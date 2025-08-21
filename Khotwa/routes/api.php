@@ -27,7 +27,10 @@ use App\Http\Controllers\{
     WarningController,
     EventFeedbackController,
     DonationController,
-    ExpenseController
+    ExpenseController,
+    FinanceController,
+    DocumentController,
+    LeaderboardController
 };
 
 // Admin-specific controllers
@@ -88,6 +91,7 @@ Route::prefix('auth')->group(function () {
     // 🔹 Password Reset
     Route::post('/forget-password', [ForgotPasswordController::class, 'sendResetOtp']);
     Route::post('/confirm-reset-password', [ForgotPasswordController::class, 'reset']);
+
 });
 
 /*
@@ -172,6 +176,21 @@ Route::middleware(['auth:sanctum', 'role:Admin'])->prefix('admin')->group(functi
     Route::get('/donations-statistics', [DonationController::class, 'statistics'])->name('donations.stats');
 
     Route::apiResource('expenses', ExpenseController::class);
+
+    Route::apiResource('donations', DonationController::class);
+
+    Route::get('/financial-statistics', [FinanceController::class, 'statistics'])->name('donations.stats');
+
+    // File Uploader
+    Route::get('/documents', [DocumentController::class, 'index']);
+    Route::post('/documents', [DocumentController::class, 'store']);
+    Route::get('/documents/{id}', [DocumentController::class, 'show']);
+    Route::delete('/documents/{id}', [DocumentController::class, 'destroy']);
+    //Download file
+    Route::get('documents/{id}/download', [DocumentController::class, 'download'])->name('documents.download');
+
+    Route::get('/leaderboard', [LeaderboardController::class, 'index'])->name('leaderboard.index');
+    
 
    // Route::get('/search/volunteers', [SearchController::class, 'searchVolunteers']);
 });

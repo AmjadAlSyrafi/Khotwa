@@ -2,65 +2,95 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Document;
+use App\Helpers\ApiResponse;
 use App\Http\Requests\StoreDocumentRequest;
-use App\Http\Requests\UpdateDocumentRequest;
+use App\Http\Resources\DocumentResource;
+use App\Models\Document;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Http\Request;
 
 class DocumentController extends Controller
 {
     /**
-     * Display a listing of the resource.
+     * List all documents.
      */
     public function index()
     {
-        //
+        $documents = Document::with(['uploader','volunteer','event','project'])
+            ->latest()
+            ->get();
+
+        return ApiResponse::success(DocumentResource::collection($documents));
     }
 
     /**
-     * Show the form for creating a new resource.
-     */
-    public function create()
-    {
-        //
-    }
-
-    /**
-     * Store a newly created resource in storage.
+     * Store a new document.
      */
     public function store(StoreDocumentRequest $request)
     {
-        //
+        $originalName = $request->file('file')->getClientOriginalName();
+
+        $filePath = $request->file('file')->storeAs('documents', $originalName, 'local');
+        $document = Document::create([
+            'file_path'    => $filePath,
+            'file_name'    => $originalName,
+            'type'         => $request->input('type'),
+            'uploaded_by'  => Auth::user()->id,
+            'volunteer_id' => $request->input('volunteer_id'),
+            'event_id'     => $request->input('event_id'),
+            'project_id'   => $request->input('project_id'),
+        ]);
+
+        return ApiResponse::success(new DocumentResource($document), 'Document uploaded successfully.', 201);
     }
 
     /**
-     * Display the specified resource.
+     * Show a document.
      */
-    public function show(Document $document)
+    public function show($id)
     {
-        //
+        $document = Document::with(['uploader','volunteer','event','project'])->find($id);
+
+        if (!$document) {
+            return ApiResponse::error('Document not found.', 404);
+        }
+
+        return ApiResponse::success(new DocumentResource($document));
     }
 
     /**
-     * Show the form for editing the specified resource.
+     * Delete a document.
      */
-    public function edit(Document $document)
+    public function destroy($id)
     {
-        //
+        $document = Document::find($id);
+
+        if (!$document) {
+            return ApiResponse::error('Document not found.', 404);
+        }
+
+        Storage::delete($document->file_path);
+        $document->delete();
+
+        return ApiResponse::success(null, 'Document deleted successfully.');
     }
 
-    /**
-     * Update the specified resource in storage.
-     */
-    public function update(UpdateDocumentRequest $request, Document $document)
+    public function download(Request $request, $id)
     {
-        //
+
+        if (! $request->hasValidSignature()) {
+            abort(401, 'Invalid or expired link.');
+        }
+
+        $document = Document::findOrFail($id);
+
+        if (!Storage::disk('local')->exists($document->file_path)) {
+            return ApiResponse::error('File not found.', 404);
+        }
+
+        return Storage::disk('local')->download($document->file_path,$document->file_name);
     }
 
-    /**
-     * Remove the specified resource from storage.
-     */
-    public function destroy(Document $document)
-    {
-        //
-    }
+
 }

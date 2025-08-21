@@ -11,11 +11,15 @@ use App\Helpers\ApiResponse;
 use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
 use App\Services\BadgeService;
+use App\Services\LeaderboardService;
 
 class AttendanceController extends Controller
 {
 
-public function __construct(private BadgeService $badgeService) {}
+    public function __construct(
+        private BadgeService $badgeService,
+        private LeaderboardService $leaderboardService
+    ) {}
 
     /**
      * Volunteer QR Check-in
@@ -60,8 +64,11 @@ public function __construct(private BadgeService $badgeService) {}
             ]);
 
             $event->increment('current_volunteers');
-            //Badges Service
+            // Badges Service
             $this->badgeService->syncAfterAttendance($volunteer->id);
+            // Score Service
+            $this->leaderboardService->addScore($volunteer->id, 5);
+
             return ApiResponse::success([], 'Check-in successful via QR.');
         }
 
@@ -160,8 +167,10 @@ public function __construct(private BadgeService $badgeService) {}
                             'supervisor_id'  => $user->id,
                         ]);
                         $event->increment('current_volunteers');
-                        //Badges Service
+                        // Badges Service
                         $this->badgeService->syncAfterAttendance($volunteerId);
+                        // Score Service
+                        $this->leaderboardService->addScore($volunteerId, 5);
                     }
                 }
 
