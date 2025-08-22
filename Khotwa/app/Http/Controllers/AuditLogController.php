@@ -5,6 +5,8 @@ namespace App\Http\Controllers;
 use App\Models\AuditLog;
 use App\Http\Requests\StoreAuditLogRequest;
 use App\Http\Requests\UpdateAuditLogRequest;
+use App\Helpers\ApiResponse;
+use App\Http\Resources\AuditLogResource;
 
 class AuditLogController extends Controller
 {
@@ -13,7 +15,11 @@ class AuditLogController extends Controller
      */
     public function index()
     {
-        //
+        $logs = AuditLog::with('user:id,email')
+            ->latest('timestamp')
+            ->paginate(50);
+
+        return ApiResponse::success(AuditLogResource::collection($logs), 'Audit logs fetched successfully.');
     }
 
     /**

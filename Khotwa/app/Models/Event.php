@@ -36,6 +36,9 @@ class Event extends Model
         'time' => $this->time
     ];
     }
+    protected $casts = [
+        'date' => 'datetime',
+    ];
     // Relationships
     public function project()
     {
@@ -56,7 +59,7 @@ class Event extends Model
     {
         return $this->hasMany(Evaluation::class);
     }
-    
+
         public function donations() {
         return $this->hasMany(Donation::class);
     }
