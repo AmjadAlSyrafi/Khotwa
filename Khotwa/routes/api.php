@@ -30,7 +30,8 @@ use App\Http\Controllers\{
     ExpenseController,
     FinanceController,
     DocumentController,
-    LeaderboardController
+    LeaderboardController,
+    AuditLogController
 };
 
 // Admin-specific controllers
@@ -123,7 +124,7 @@ Route::middleware(['auth:sanctum'])->prefix('donatios')->group(function () {
 |
 */
 
-Route::middleware(['auth:sanctum', 'role:Admin'])->prefix('admin')->group(function () {
+Route::middleware(['auth:sanctum', 'role:Admin', 'admin.audit'])->prefix('admin')->group(function () {
     // 🔹 User Management
     Route::apiResource('users', UserManagementController::class);
 
@@ -190,7 +191,8 @@ Route::middleware(['auth:sanctum', 'role:Admin'])->prefix('admin')->group(functi
     Route::get('documents/{id}/download', [DocumentController::class, 'download'])->name('documents.download');
 
     Route::get('/leaderboard', [LeaderboardController::class, 'index'])->name('leaderboard.index');
-    
+
+    Route::get('/autit-log', [AuditLogController::class, 'index'])->name('AuditLog.index');
 
    // Route::get('/search/volunteers', [SearchController::class, 'searchVolunteers']);
 });
@@ -306,5 +308,8 @@ Route::middleware(['auth:sanctum', 'role:Volunteer'])->prefix('volunteer')->grou
     //Feadback
     Route::post('/feedback', [EventFeedbackController::class,'store']);
     Route::get('/feedback/event/{eventId}', [EventFeedbackController::class,'myEventFeedback']);
+
+    Route::get('/leaderboard', [LeaderboardController::class, 'index'])->name('leaderboard.index');
+
 });
 

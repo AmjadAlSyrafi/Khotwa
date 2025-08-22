@@ -19,6 +19,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'verified' => \Illuminate\Auth\Middleware\EnsureEmailIsVerified::class,
             'role'     => \App\Http\Middleware\RoleMiddleware::class,
             'auth:sanctum' => \Laravel\Sanctum\Http\Middleware\EnsureFrontendRequestsAreStateful::class,
+            'admin.audit' => \App\Http\Middleware\AdminAuditLogMiddleware::class,
         ]);
     })
 

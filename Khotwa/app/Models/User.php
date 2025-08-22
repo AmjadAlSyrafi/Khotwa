@@ -49,6 +49,12 @@ class User extends Authenticatable implements MustVerifyEmail
     {
         return $this->hasOne(Volunteer::class);
     }
+
+    public function auditLogs()
+    {
+        return $this->hasMany(AuditLog::class);
+    }
+
     /**
      * Get the attributes that should be cast.
      *

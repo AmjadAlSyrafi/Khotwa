@@ -11,9 +11,12 @@ use Illuminate\Support\Str;
 use Carbon\Carbon;
 use Endroid\QrCode\Builder\Builder;
 use Illuminate\Support\Facades\Storage;
+use App\Services\RecommendationService;
 
 class EventController extends Controller
 {
+
+    public function __construct(private RecommendationService $recommendationService) {}
     public function index()
     {
         $events = Event::with('project')
@@ -78,19 +81,15 @@ class EventController extends Controller
 
     public function recommended()
     {
-        $events = Event::withCount(['registrations as registered_count'])
-            ->where('status', 'open')
-            ->orderBy('date', 'asc')
-            ->get()
-            ->sortByDesc(function ($event) {
-                return $event->required_volunteers > 0
-                    ? $event->registered_count / $event->required_volunteers
-                    : 0;
-            })
-            ->take(10)
-            ->values();
+        $volunteer = optional(Auth::user())->volunteer;
 
-        return ApiResponse::success($events, 'Recommended events fetched successfully');
+        if (!$volunteer) {
+            return ApiResponse::error('Only volunteers can access recommendations.', 403);
+        }
+
+        $events = $this->recommendationService->getRecommendedEvents($volunteer);
+
+        return ApiResponse::success($events, 'Personalized recommended events fetched successfully.');
     }
 
     public function volunteerEvents()
