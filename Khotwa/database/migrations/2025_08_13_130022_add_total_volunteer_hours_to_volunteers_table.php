@@ -12,6 +12,9 @@ return new class extends Migration
             if (!Schema::hasColumn('volunteers', 'total_volunteer_hours')) {
                 $table->integer('total_volunteer_hours')->default(0);
             }
+
+            $table->json('availability_days')->nullable()->after('availability');
+
         });
 
         Schema::table('tasks', function (Blueprint $table) {

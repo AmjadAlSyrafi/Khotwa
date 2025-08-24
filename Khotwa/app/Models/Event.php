@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Laravel\Scout\Searchable;
+use Illuminate\Support\Facades\Storage;
 
 class Event extends Model
 {
@@ -23,6 +24,7 @@ class Event extends Model
         'project_id',
         'required_volunteers',
         'registered_count',
+        'cover_image',
     ];
 
     public function toSearchableArray()
@@ -67,4 +69,24 @@ class Event extends Model
     public function expenses() {
         return $this->hasMany(Expense::class);
     }
+
+        protected $appends = ['cover_image_url'];
+
+    public function getCoverImageUrlAttribute(): ?string
+    {
+        if (!$this->cover_image) {
+            return Storage::url('images/defaults/event.png');
+        }
+        return Storage::url($this->cover_image);
+    }
+
+    protected static function booted(): void
+    {
+        static::deleting(function (self $event) {
+            if ($event->cover_image && Storage::disk('public')->exists($event->cover_image)) {
+                Storage::disk('public')->delete($event->cover_image);
+            }
+        });
+    }
+
 }

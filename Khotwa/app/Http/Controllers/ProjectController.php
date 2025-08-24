@@ -6,14 +6,14 @@ use App\Models\Project;
 use App\Http\Requests\StoreProjectRequest;
 use App\Http\Requests\UpdateProjectRequest;
 use App\Helpers\ApiResponse;
-
+use App\Http\Resources\ProjectResource;
 
 class ProjectController extends Controller
 {
     public function index()
     {
         $projects = Project::all();
-        return ApiResponse::success($projects, 'Projects fetched successfully');
+        return ApiResponse::success(ProjectResource::collection($projects), 'Projects fetched successfully');
     }
 
     public function show($id)
@@ -22,14 +22,13 @@ class ProjectController extends Controller
         if (!$project) {
             return ApiResponse::error('Project not found', 404);
         }
-        return ApiResponse::success($project, 'Project details fetched successfully');
+        return ApiResponse::success(new ProjectResource($project), 'Project details fetched successfully');
     }
 
     public function store(StoreProjectRequest $request)
     {
         $project = Project::create($request->all());
-
-        return ApiResponse::success($project, 'Project created successfully', 201);
+        return ApiResponse::success(new ProjectResource($project), 'Project created successfully', 201);
     }
 
     public function update(StoreProjectRequest $request, $id)
@@ -41,7 +40,7 @@ class ProjectController extends Controller
 
         $project->update($request->all());
 
-        return ApiResponse::success($project, 'Project updated successfully');
+        return ApiResponse::success(new ProjectResource($project), 'Project updated successfully');
     }
 
     public function destroy($id)
@@ -56,39 +55,34 @@ class ProjectController extends Controller
         return ApiResponse::success(null, 'Project deleted successfully');
     }
 
-public function top()
-{
-    $projects = Project::with([
-            'donations',
-            'events.registrations'
-        ])
-        ->get()
-        ->map(function ($project) {
+    public function top()
+    {
+        $projects = Project::with([
+                'donations',
+                'events.registrations'
+            ])
+            ->get()
+            ->map(function ($project) {
+                $paid = $project->donations->sum('amount');
+                $participants = $project->events->sum(function ($event) {
+                    return $event->registrations->where('status', 'accepted')->count();
+                });
 
-            $paid = $project->donations->sum('amount');
-            $participants = $project->events->sum(function ($event) {
-                return $event->registrations->where('status', 'accepted')->count();
-            });
+                $activityScore = $paid + ($participants * 10) + ($project->events->count() * 5);
 
-            $activityScore = $paid + ($participants * 10) + ($project->events->count() * 5);
-            // وزن تقريبي: التبرعات + المشاركين + عدد الفعاليات
+                return [
+                    'id'             => $project->id,
+                    'name'           => $project->name,
+                    'organization'   => $project->organization ?? 'Charity Org',
+                    'paid'           => $paid,
+                    'participants'   => $participants,
+                    'events_count'   => $project->events->count(),
+                    'activity_score' => $activityScore,
+                ];
+            })
+            ->sortByDesc('activity_score')
+            ->values();
 
-            return [
-                'id' => $project->id,
-                'name' => $project->name,
-                'organization' => $project->organization ?? 'Charity Org',
-                'paid' => $paid,
-                'participants' => $participants,
-                'events_count' => $project->events->count(),
-                'activity_score' => $activityScore,
-            ];
-        })
-        ->sortByDesc('activity_score')
-        ->values();
-
-    return ApiResponse::success($projects, 'Top projects fetched successfully.');
+        return ApiResponse::success($projects, 'Top projects fetched successfully.');
+    }
 }
-
-
-}
-

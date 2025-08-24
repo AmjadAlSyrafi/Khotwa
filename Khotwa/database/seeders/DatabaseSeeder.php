@@ -13,10 +13,21 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        // User::factory(10)->create();
+        $this->call([
+            RoleSeeder::class,
+            BadgeSeeder::class,
+            SkillSeeder::class,
+            UserSeeder::class,
+            VolunteerApplicationSeeder::class,
+            VolunteerSeeder::class,
+            ProjectSeeder::class,
+            EventSeeder::class,
+            DonationSeeder::class,
+            ExpenseSeeder::class,
+            WarningSeeder::class,
+            LeaderboardSeeder::class,
+            AuditLogSeeder::class,
+        ]);
 
-
-
-        $this->call(RoleSeeder::class);
     }
 }

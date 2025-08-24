@@ -16,16 +16,26 @@ class RoleMiddleware
      */
     public function handle(Request $request, Closure $next, $roles)
     {
-    $user = Auth::user();
+        $user = Auth::user();
 
-    // convert roles string to array
-    $roleArray = explode(',', $roles);
+        if (!$user || !$user->role) {
+            abort(403, 'You do not have access.');
+        }
 
-    if (!$user || !in_array($user->role->name, $roleArray)) {
-        abort(403, 'You do not have access.');
-    }
+        // convert roles string to array
+        $roleArray = explode(',', $roles);
+        $userRole  = $user->role->name;
 
-    return $next($request);
+        // special case: Supervisor also has Volunteer permissions
+        if ($userRole === 'Supervisor' && in_array('Volunteer', $roleArray)) {
+            return $next($request);
+        }
+
+        // check normal role access
+        if (!in_array($userRole, $roleArray)) {
+            abort(403, 'You do not have access.');
+        }
+
+        return $next($request);
     }
 }
-

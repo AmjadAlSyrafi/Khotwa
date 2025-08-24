@@ -13,7 +13,10 @@ use App\Http\Controllers\API\Auth\{
     ForgotPasswordController,
     OtpController,
 };
-use App\Http\Controllers\API\Volunteer\ProfileController;
+use App\Http\Controllers\API\Volunteer\{
+    ProfileController,
+    VolunteerProfileController
+};
 
 // General controllers
 use App\Http\Controllers\{
@@ -31,7 +34,9 @@ use App\Http\Controllers\{
     FinanceController,
     DocumentController,
     LeaderboardController,
-    AuditLogController
+    AuditLogController,
+    ProjectImageController ,
+    EventImageController
 };
 
 // Admin-specific controllers
@@ -67,6 +72,11 @@ Route::post('/join-request', [VolunteerApplicationController::class, 'store']);
 //  Get authenticated user data
 Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
     return $request->user();
+});
+
+Route::middleware(['auth:sanctum'])->prefix('auth')->group(function () {
+    Route::post('/change-default-password', [ForgotPasswordController::class, 'changeDefaultPassword']);
+
 });
 
 /*
@@ -194,6 +204,10 @@ Route::middleware(['auth:sanctum', 'role:Admin', 'admin.audit'])->prefix('admin'
 
     Route::get('/autit-log', [AuditLogController::class, 'index'])->name('AuditLog.index');
 
+    Route::post('/projects/{project}/cover', [ProjectImageController::class, 'updateCover']);
+
+    Route::post('/events/{event}/cover', [EventImageController::class, 'updateCover']);
+
    // Route::get('/search/volunteers', [SearchController::class, 'searchVolunteers']);
 });
 
@@ -310,6 +324,8 @@ Route::middleware(['auth:sanctum', 'role:Volunteer'])->prefix('volunteer')->grou
     Route::get('/feedback/event/{eventId}', [EventFeedbackController::class,'myEventFeedback']);
 
     Route::get('/leaderboard', [LeaderboardController::class, 'index'])->name('leaderboard.index');
+
+    Route::post('/profile/image', [VolunteerProfileController::class, 'updateImage']);
 
 });
 
