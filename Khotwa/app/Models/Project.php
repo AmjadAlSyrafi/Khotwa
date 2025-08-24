@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Laravel\Scout\Searchable;
+use Illuminate\Support\Facades\Storage;
 
 class Project extends Model
 {
@@ -17,6 +18,8 @@ class Project extends Model
         'start_date',
         'end_date',
         'status',
+        'cover_image',
+
     ];
 
     public function toSearchableArray()
@@ -30,6 +33,11 @@ class Project extends Model
     ];
     }
 
+    protected $casts = [
+        'start_date' => 'datetime',
+        'end_date' => 'datetime',
+    ];
+
     public function events()
     {
         return $this->hasMany(Event::class);
@@ -42,6 +50,25 @@ class Project extends Model
 
     public function expenses() {
         return $this->hasMany(Expense::class);
+    }
+
+   protected $appends = ['cover_image_url'];
+
+    public function getCoverImageUrlAttribute(): ?string
+    {
+        if (!$this->cover_image) {
+            return Storage::url('images/defaults/project.png');
+        }
+        return Storage::url($this->cover_image);
+    }
+
+    protected static function booted(): void
+    {
+        static::deleting(function (self $project) {
+            if ($project->cover_image && Storage::disk('public')->exists($project->cover_image)) {
+                Storage::disk('public')->delete($project->cover_image);
+            }
+        });
     }
 
 }

@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\Storage;
 
 class Volunteer extends Model
 {
@@ -14,7 +15,7 @@ class Volunteer extends Model
         'city_id','education_level','university','registration_date',
         'volunteering_years','motivation','availability','preferred_time',
         'interests','emergency_contact_name','emergency_contact_phone',
-        'emergency_contact_relationship','user_id','total_volunteer_hours',
+        'emergency_contact_relationship','user_id','total_volunteer_hours', 'profile_image',
     ];
 
     /** searchable fields **/
@@ -70,4 +71,24 @@ class Volunteer extends Model
         'availability'      => 'array',
         'interests'         => 'array',
     ];
+
+    protected $appends = ['profile_image_url'];
+        public function getProfileImageUrlAttribute(): ?string
+    {
+        if (!$this->profile_image) {
+            //Default image
+            return Storage::url('images/defaults/volunteer.png');
+        }
+        return Storage::url($this->profile_image);
+    }
+
+    protected static function booted(): void
+    {
+        static::deleting(function (self $volunteer) {
+            if ($volunteer->profile_image && Storage::disk('public')->exists($volunteer->profile_image)) {
+                Storage::disk('public')->delete($volunteer->profile_image);
+            }
+        });
+    }
+
 }

@@ -12,18 +12,19 @@ use Carbon\Carbon;
 use Endroid\QrCode\Builder\Builder;
 use Illuminate\Support\Facades\Storage;
 use App\Services\RecommendationService;
+use App\Http\Resources\EventResource;
 
 class EventController extends Controller
 {
-
     public function __construct(private RecommendationService $recommendationService) {}
+
     public function index()
     {
         $events = Event::with('project')
             ->orderBy('date', 'asc')
             ->get();
 
-        return ApiResponse::success($events, 'Events fetched successfully');
+        return ApiResponse::success(EventResource::collection($events), 'Events fetched successfully');
     }
 
     public function show($id)
@@ -32,7 +33,7 @@ class EventController extends Controller
         if (!$event) {
             return ApiResponse::error('Event not found', 404);
         }
-        return ApiResponse::success($event, 'Event details fetched successfully');
+        return ApiResponse::success(new EventResource($event), 'Event details fetched successfully');
     }
 
     public function store(StoreEventRequest $request)
@@ -47,7 +48,7 @@ class EventController extends Controller
         $event->qr_token_expires_at = Carbon::parse($event->end_date)->endOfDay();
         $event->save();
 
-        return ApiResponse::success($event, 'Event created successfully', 201);
+        return ApiResponse::success(new EventResource($event), 'Event created successfully', 201);
     }
 
     public function update(UpdateEventRequest $request, $id)
@@ -65,7 +66,7 @@ class EventController extends Controller
 
         $event->update($data);
 
-        return ApiResponse::success($event, 'Event updated successfully');
+        return ApiResponse::success(new EventResource($event), 'Event updated successfully');
     }
 
     public function destroy($id)
@@ -89,7 +90,7 @@ class EventController extends Controller
 
         $events = $this->recommendationService->getRecommendedEvents($volunteer);
 
-        return ApiResponse::success($events, 'Personalized recommended events fetched successfully.');
+        return ApiResponse::success(EventResource::collection($events), 'Personalized recommended events fetched successfully.');
     }
 
     public function volunteerEvents()
@@ -109,7 +110,7 @@ class EventController extends Controller
             ->orderBy('date', 'asc')
             ->get();
 
-        return ApiResponse::success($events, 'Volunteer events fetched successfully.');
+        return ApiResponse::success(EventResource::collection($events), 'Volunteer events fetched successfully.');
     }
 
     public function supervisorEvents()
@@ -124,7 +125,7 @@ class EventController extends Controller
             ->orderBy('date', 'asc')
             ->get();
 
-        return ApiResponse::success($events, 'Supervisor events fetched successfully.');
+        return ApiResponse::success(EventResource::collection($events), 'Supervisor events fetched successfully.');
     }
 
     public function volunteerEventLog()
@@ -146,7 +147,7 @@ class EventController extends Controller
             ->orderBy('date', 'desc')
             ->get();
 
-        return ApiResponse::success($events, 'Volunteer event log fetched successfully.');
+        return ApiResponse::success(EventResource::collection($events), 'Volunteer event log fetched successfully.');
     }
 
     public function supervisorEventLog()
@@ -161,7 +162,7 @@ class EventController extends Controller
             ->orderBy('date', 'desc')
             ->get();
 
-        return ApiResponse::success($events, 'Supervisor event log fetched successfully.');
+        return ApiResponse::success(EventResource::collection($events), 'Supervisor event log fetched successfully.');
     }
 
     public function generateQrCode($eventId)

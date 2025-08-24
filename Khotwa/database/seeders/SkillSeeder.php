@@ -2,16 +2,30 @@
 
 namespace Database\Seeders;
 
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\DB;
 
 class SkillSeeder extends Seeder
 {
-    /**
-     * Run the database seeds.
-     */
     public function run(): void
     {
-        //
+        $skills = [
+            'Teamwork',
+            'Communication',
+            'Leadership',
+            'Problem Solving',
+            'Creativity',
+            'Event Planning',
+            'First Aid',
+            'Technical Support'
+        ];
+
+        foreach ($skills as $skill) {
+            DB::table('skills')->insertOrIgnore([
+                'name' => $skill,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+        }
     }
 }

@@ -7,17 +7,18 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use App\Models\Volunteer;
 use App\Helpers\ApiResponse;
+use App\Http\Resources\VolunteerResource;
 
 class ProfileController extends Controller
 {
-    //عرض ملفي الشخصي
+    // عرض ملفي الشخصي
     public function show()
     {
         $volunteer = Volunteer::where('user_id', Auth::id())->first();
         if (!$volunteer) {
             return ApiResponse::error('Volunteer profile not found', 404);
         }
-        return ApiResponse::success($volunteer, 'Profile retrieved successfully');
+        return ApiResponse::success(new VolunteerResource($volunteer), 'Profile retrieved successfully');
     }
 
     // تعديل بيانات ملفي
@@ -38,7 +39,8 @@ class ProfileController extends Controller
             'motivation' => 'nullable|string',
         ]);
 
-        $volunteer->update($request->all());
-        return ApiResponse::success($volunteer, 'Profile updated successfully');
+        $volunteer->update($data);
+
+        return ApiResponse::success(new VolunteerResource($volunteer), 'Profile updated successfully');
     }
 }
