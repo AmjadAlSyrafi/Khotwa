@@ -6,7 +6,9 @@ use App\Models\Project;
 use App\Http\Requests\StoreProjectRequest;
 use App\Http\Requests\UpdateProjectRequest;
 use App\Helpers\ApiResponse;
-
+use App\Notifications\ProjectCreatedNotification;
+use App\Notifications\ProjectClosedNotification;
+use App\Models\User;
 
 class ProjectController extends Controller
 {
@@ -29,6 +31,18 @@ class ProjectController extends Controller
     {
         $project = Project::create($request->all());
 
+    // إرسال إشعار للمشرفين والمتطوعين
+    $supervisors = User::where('role', 'Supervisor')->get();
+    $volunteers = User::where('role', 'Volunteer')->get();
+
+    foreach ($supervisors as $supervisor) {
+        $supervisor->notify(new ProjectCreatedNotification($project));
+    }
+
+    foreach ($volunteers as $volunteer) {
+        $volunteer->notify(new ProjectCreatedNotification($project));
+    }
+
         return ApiResponse::success($project, 'Project created successfully', 201);
     }
 
@@ -39,10 +53,25 @@ class ProjectController extends Controller
             return ApiResponse::error('Project not found', 404);
         }
 
+        $oldStatus = $project->status;
         $project->update($request->all());
+
+        // إذا تغيرت الحالة إلى finished إشعار انتهاء
+        if ($oldStatus !== 'closed' && $project->status === 'closed') {
+        $supervisors = User::where('role', 'Supervisor')->get();
+        $volunteers = User::where('role', 'Volunteer')->get();
+
+        foreach ($supervisors as $supervisor) {
+            $supervisor->notify(new ProjectClosedNotification($project));
+        }
+        foreach ($volunteers as $volunteer) {
+            $volunteer->notify(new ProjectClosedNotification($project));
+        }
+    }
 
         return ApiResponse::success($project, 'Project updated successfully');
     }
+
 
     public function destroy($id)
     {

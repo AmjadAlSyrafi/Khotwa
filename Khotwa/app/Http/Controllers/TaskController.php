@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Controllers;
+namespace App\Http\Controllers\API;
 
 use App\Models\Task;
 use App\Models\Volunteer;
@@ -9,6 +9,9 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
+use App\Http\Controllers\Controller;
+use App\Http\Controllers\API\NotificationController;
+
 
 class TaskController extends Controller
 {
@@ -30,6 +33,9 @@ class TaskController extends Controller
         $data['completion_state'] = 'active';
 
         $task = Task::create($data);
+
+        // 🔔 إرسال إشعار للمتطوع بالمهمة الجديدة
+        app(NotificationController::class)->notifyVolunteerTaskAssigned($task->volunteer->user, $task);
 
         return ApiResponse::success($task, 'Task created successfully', 201);
     }
@@ -123,64 +129,82 @@ class TaskController extends Controller
     public function updateTaskStatus($id, Request $request)
     {
         $task = Task::find($id);
-        if (!$task) return ApiResponse::error('Task not found', 404);
+    if (!$task) return ApiResponse::error('Task not found', 404);
 
-        if (!$this->isVolunteerAuthorized($task)) {
-            return ApiResponse::error('Unauthorized', 403);
+    if (!$this->isVolunteerAuthorized($task)) {
+        return ApiResponse::error('Unauthorized', 403);
+    }
+
+    $user = \Illuminate\Support\Facades\Auth::user();
+    $oldStatus = $task->status;
+
+    $data = $request->validate([
+        'action' => 'required|in:accept,reject,withdraw'
+    ]);
+
+    if ($data['action'] === 'withdraw') {
+        if ($task->status !== 'accepted') {
+            return ApiResponse::error('Task cannot be withdrawn', 400);
+        }
+        if (\Carbon\Carbon::now()->greaterThanOrEqualTo(\Carbon\Carbon::parse($task->start_time))) {
+            return ApiResponse::error('Cannot withdraw after start time', 400);
         }
 
-        $data = $request->validate([
-            'action' => 'required|in:accept,reject,withdraw'
-        ]);
+        $task->update(['status' => 'withdrawn']);
 
-        if ($data['action'] === 'withdraw') {
-            if ($task->status !== 'accepted') {
-                return ApiResponse::error('Task cannot be withdrawn', 400);
-            }
-
-            if (Carbon::now()->greaterThanOrEqualTo(Carbon::parse($task->start_time))) {
-                return ApiResponse::error('Cannot withdraw after start time', 400);
-            }
-
-            $task->update(['status' => 'withdrawn']);
-        }
-        elseif (in_array($data['action'], ['accept', 'reject'])) {
-            if ($task->status !== 'pending') {
-                return ApiResponse::error('Task cannot be updated for this action', 400);
-            }
-
-            $task->update(['status' => $data['action'] === 'accept' ? 'accepted' : 'rejected']);
+        // إشعار للمشرفين
+        app(\App\Http\Controllers\API\NotificationController::class)
+            ->notifyAdminsVolunteerWithdrawn($task, $user);
+    } else {
+        $newStatus = $data['action'] === 'accept' ? 'accepted' : 'rejected';
+        if ($task->status !== 'pending') {
+            return ApiResponse::error('Task cannot be updated for this action', 400);
         }
 
-        return ApiResponse::success($task, "Task {$data['action']} successfully");
+        $task->update(['status' => $newStatus]);
+
+        // إشعار للمتطوع نفسه بتغيير الحالة
+        app(\App\Http\Controllers\API\NotificationController::class)
+            ->notifyVolunteerTaskStatusChanged($task->volunteer->user, $task, $oldStatus, $newStatus);
+    }
+
+    return ApiResponse::success($task, "Task {$data['action']} successfully");
     }
 
     public function updateCompletionState(Request $request, $id)
     {
         $task = Task::find($id);
-        if (!$task) return ApiResponse::error('Task not found', 404);
+    if (!$task) return ApiResponse::error('Task not found', 404);
 
-        if (!$this->isVolunteerAuthorized($task)) {
-            return ApiResponse::error('Unauthorized', 403);
-        }
-
-        $data = $request->validate([
-            'completion_state' => 'required|in:active,completed'
-        ]);
-
-        DB::transaction(function () use ($task, $data) {
-            $task->update(['completion_state' => $data['completion_state']]);
-
-            if ($data['completion_state'] === 'completed' && $task->volunteer_hours > 0) {
-                $volunteer = $task->volunteer ?? null;
-                if ($volunteer) {
-                    $volunteer->increment('total_volunteer_hours', $task->volunteer_hours);
-                }
-            }
-        });
-
-        return ApiResponse::success($task, 'Task completion state updated successfully');
+    if (!$this->isVolunteerAuthorized($task)) {
+        return ApiResponse::error('Unauthorized', 403);
     }
+
+    $data = $request->validate([
+        'completion_state' => 'required|in:active,completed'
+    ]);
+
+    \Illuminate\Support\Facades\DB::transaction(function () use ($task, $data) {
+        $task->update(['completion_state' => $data['completion_state']]);
+
+        if ($data['completion_state'] === 'completed' && $task->volunteer_hours > 0) {
+            $volunteer = $task->volunteer ?? null;
+            if ($volunteer) {
+                $volunteer->increment('total_volunteer_hours', $task->volunteer_hours);
+            }
+        }
+    });
+
+    // لو صارت Completed اشعار المشرف
+    if ($data['completion_state'] === 'completed') {
+        $user = \Illuminate\Support\Facades\Auth::user();
+        app(\App\Http\Controllers\API\NotificationController::class)
+            ->notifySupervisorsVolunteerCompletedTask($task, $user);
+    }
+
+    return ApiResponse::success($task, 'Task completion state updated successfully');
+    }
+
 
     /* ---------------- Private Helpers ---------------- */
 
@@ -190,3 +214,4 @@ class TaskController extends Controller
         return $volunteer && $task->volunteer_id === $volunteer->id;
     }
 }
+

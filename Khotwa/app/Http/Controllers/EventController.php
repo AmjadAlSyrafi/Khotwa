@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Controllers;
+namespace App\Http\Controllers\API;
 
 use App\Models\Event;
 use Illuminate\Support\Facades\Auth;
@@ -11,6 +11,11 @@ use Illuminate\Support\Str;
 use Carbon\Carbon;
 use Endroid\QrCode\Builder\Builder;
 use Illuminate\Support\Facades\Storage;
+use App\Http\Controllers\Controller;
+use App\Models\VolunteerEvent;
+use Illuminate\Http\Request;
+use App\Http\Controllers\API\NotificationController;
+
 
 class EventController extends Controller
 {
@@ -44,8 +49,17 @@ class EventController extends Controller
         $event->qr_token_expires_at = Carbon::parse($event->end_date)->endOfDay();
         $event->save();
 
+        // إشعار إضافة فعالية جديدة (لكل من المتطوعين + المشرفين)
+    $notifier = app(NotificationController::class);
+    $notifier->notifyAllVolunteersNewEvent($event);
+    $notifier->notifySupervisorsNewEvent($event);
+
+    //  إشعار إضافة فعالية جديدة خاص بالادمن
+    NotificationController::notifyAdminsEventCreated($event);
+
         return ApiResponse::success($event, 'Event created successfully', 201);
     }
+
 
     public function update(UpdateEventRequest $request, $id)
     {
@@ -59,11 +73,22 @@ class EventController extends Controller
         if (isset($data['required_volunteers']) && $data['required_volunteers'] < $event->current_volunteers) {
             return ApiResponse::error('Required volunteers cannot be less than current volunteers.', 422);
         }
-
+        $oldStatus = $event->status;
         $event->update($data);
+
+        // إذا تغيرت الحالة وصارت منتهية أشعر المسجل بالفعالية والمشرفين
+    if ($oldStatus !== $event->status && in_array($event->status, ['completed', 'closed', 'ended'])) {
+        $notifier = app(NotificationController::class);
+        $notifier->notifyRegisteredVolunteersEventEnded($event);
+        $notifier->notifySupervisorsEventEnded($event);
+
+        // إشعار انتهاء فعالية للادمن بحال الانتهاء فقط
+        NotificationController::notifyAdminEventEnded($event);
+    }
 
         return ApiResponse::success($event, 'Event updated successfully');
     }
+
 
     public function destroy($id)
     {
@@ -203,4 +228,43 @@ class EventController extends Controller
 
         return response()->file(storage_path("app/public/{$fileName}"));
     }
+
+    // اضافيات لازم يتواجدن بشي مكان بس ما لقيت وين ضمن الكود مؤقتياا
+       // إنشاء فعالية
+    public function createEvent(Request $request)
+    {
+        $data = $request->validate([
+            'title'       => 'required|string',
+            'description' => 'nullable|string',
+            'date'        => 'required|date',
+        ]);
+
+        $event = Event::create($data);
+
+        return response()->json(['message' => 'Event created successfully', 'event' => $event]);
+    }
+
+    // قبول تسجيل متطوع في فعالية
+    public function approveVolunteer($eventId, $volunteerId)
+    {
+        $eventVolunteer = VolunteerEvent::where('event_id', $eventId)
+            ->where('volunteer_id', $volunteerId)
+            ->firstOrFail();
+
+        $eventVolunteer->status = 'accepted';
+        $eventVolunteer->save();
+
+        // إشعار للمتطوع بقبول تسجيله في الفعالية
+        app(NotificationController::class)
+        ->notifyVolunteerEventAccepted($eventVolunteer->volunteer->user, $eventVolunteer->event);
+
+        // إذا اكتمل العدد خبر الادمن
+        if ($event->volunteers()->count() >= $event->capacity) {
+        NotificationController::notifyAdminEventCapacityReached($event);
+        }
+
+        return response()->json(['message' => 'Volunteer approved successfully']);
+    }
+
 }
+

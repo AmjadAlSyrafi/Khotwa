@@ -93,6 +93,8 @@ class VolunteerAdminController extends Controller
         $user->role_id = Role::where('name','Supervisor')->value('id');
         $user->save();
 
+        NotificationController::notifyVolunteerPromotedToSupervisor($user);
+
         return ApiResponse::success($user,'Volunteer promoted to Supervisor successfully');
     }
 

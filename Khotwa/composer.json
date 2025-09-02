@@ -8,8 +8,10 @@
     "require": {
         "php": "^8.2",
         "endroid/qr-code": "^5.0",
+        "kreait/laravel-firebase": "^6.1",
         "laravel/framework": "^11.31",
         "laravel/sanctum": "^4.1",
+        "laravel/scout": "^10.18",
         "laravel/telescope": "^5.10",
         "laravel/tinker": "^2.9",
         "simplesoftwareio/simple-qrcode": "^4.2",

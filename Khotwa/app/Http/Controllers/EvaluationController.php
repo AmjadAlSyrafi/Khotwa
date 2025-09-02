@@ -88,6 +88,20 @@ class EvaluationController extends Controller
                 ]);
             }
 
+            // إشعار للمتطوع بأنه تم تقييمه
+            $volUser = $evaluation->volunteer->user ?? null;
+            if ($volUser) {
+                $volUser->notifications()->create([
+                    'title'   => 'تم تقييمك',
+                    'message' => 'قام المشرف ' . Auth::user()->name . ' بتقييمك في الفعالية "' . ($event->title ?? '') . '" بمتوسط: ' . $evaluation->average_rating,
+                    'type'    => 'evaluation',
+                    'data'    => json_encode([
+                        'evaluation_id' => $evaluation->id,
+                        'event_id'      => $event->id,
+                    ]),
+                ]);
+            }
+
             return ApiResponse::success(new EvaluationResource($evaluation), 'Evaluation created successfully.', 201);
 
         } catch (QueryException $e) {
@@ -133,6 +147,20 @@ class EvaluationController extends Controller
                     'status'        => 'pending',
                 ]);
             }
+
+            // إشعار للمتطوع بتحديث التقييم
+        $volUser = $evaluation->volunteer->user ?? null;
+        if ($volUser) {
+            $volUser->notifications()->create([
+                'title'   => 'تم تحديث تقييمك',
+                'message' => 'قام المشرف ' . Auth::user()->name . ' بتحديث تقييمك في الفعالية "' . ($evaluation->event->title ?? '') . '".',
+                'type'    => 'evaluation_update',
+                'data'    => json_encode([
+                    'evaluation_id' => $evaluation->id,
+                    'event_id'      => $evaluation->event_id,
+                ]),
+            ]);
+        }
 
         return ApiResponse::success(new EvaluationResource($evaluation), 'Evaluation updated successfully.');
     }
@@ -199,3 +227,4 @@ class EvaluationController extends Controller
         return ApiResponse::success(EvaluationLiteResource::collection($evaluations), 'My evaluations fetched successfully.');
     }
 }
+

@@ -38,6 +38,8 @@ use App\Http\Controllers\Admin\{
 use App\Http\Controllers\Admin\UserManagementController;
 use App\Http\Controllers\SearchController;
 use App\Http\Controllers\TaskController;
+use App\Http\Controllers\NotificationController;
+
 
 /*
 |--------------------------------------------------------------------------
@@ -238,6 +240,8 @@ Route::middleware(['auth:sanctum', 'role:Supervisor'])->prefix('supervisor')->gr
 
     Route::get('/feedback/volunteer/{volunteerId}', [EventFeedbackController::class,'feedbackForVolunteer']);
 
+    // اضافي بالايفينت موقعه قبول تسجيل متطوع في فعالية (المشرف أيضاً يقدر يقبل)
+    Route::post('/events/{eventId}/approve-volunteer/{volunteerId}', [EventController::class, 'approveVolunteer']);
 });
 
 
@@ -287,5 +291,27 @@ Route::middleware(['auth:sanctum', 'role:Volunteer'])->prefix('volunteer')->grou
     //Feadback
     Route::post('/feedback', [EventFeedbackController::class,'store']);
     Route::get('/feedback/event/{eventId}', [EventFeedbackController::class,'myEventFeedback']);
+});
+
+/*
+|--------------------------------------------------------------------------
+| Device & Notification Routes
+|--------------------------------------------------------------------------
+*/
+
+use App\Http\Controllers\DeviceController;
+use App\Http\Controllers\NotificationTestController;
+
+Route::middleware('auth:sanctum')->group(function () {
+    Route::post('/devices/register', [DeviceController::class, 'register']);
+    Route::post('/devices/unregister', [DeviceController::class, 'unregister']);
+    // مسار اختبار إرسال إشعار (للمستخدم الموجودة عليه المصادقة  حالياً) يعني اختبار اشعار يدوي
+    Route::post('/notifications/test', [NotificationTestController::class, 'test']);
+
+    //  الاشعارات العامة
+    Route::get('/notifications', [NotificationController::class, 'index']);
+    Route::post('/notifications/{id}/mark-read', [NotificationController::class, 'markAsRead']);
+    Route::post('/notifications/mark-all-read', [NotificationController::class, 'markAllAsRead']);
+
 });
 
